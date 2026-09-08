@@ -1,0 +1,37 @@
+/* =========================
+   Profile Grid
+   ========================= */
+
+.profile-grid {
+    display: contents;
+}
+
+
+.profile-grid-item {
+    width: 100%;
+
+    aspect-ratio: 1 / 1;
+
+    overflow: hidden;
+
+    border-radius: 5%;
+}
+
+
+.profile-grid-item img {
+    width: 100%;
+    height: 100%;
+
+    display: block;
+
+    object-fit: cover;
+
+    cursor: pointer;
+
+    transition: opacity 0.2s ease;
+}
+
+
+.profile-grid-item img:hover {
+    opacity: 0.8;
+}

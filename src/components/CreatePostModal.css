@@ -1,0 +1,186 @@
+/* =========================
+   Create Post Modal
+   ========================= */
+
+.create-post-modal {
+    position: fixed;
+    inset: 0;
+
+    background: rgba(0, 0, 0, 0.65);
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    z-index: 2000;
+}
+
+
+/* =========================
+   Create Post Card
+   ========================= */
+
+.create-post-card {
+    width: min(500px, 90vw);
+
+    background: white;
+
+    border-radius: 16px;
+
+    padding: 22px;
+
+    box-shadow: 0 15px 50px rgba(0, 0, 0, 0.35);
+}
+
+
+/* =========================
+   Header
+   ========================= */
+
+.create-post-header {
+    display: flex;
+
+    align-items: center;
+    justify-content: space-between;
+
+    margin-bottom: 20px;
+}
+
+
+.create-post-header h2 {
+    color: #222;
+
+    font-family: Arial, sans-serif;
+}
+
+
+.create-post-header button {
+    border: none;
+
+    background: transparent;
+
+    font-size: 28px;
+
+    cursor: pointer;
+}
+
+
+/* =========================
+   Textarea
+   ========================= */
+
+.create-post-card textarea {
+    width: 100%;
+
+    height: 180px;
+
+    resize: vertical;
+
+    padding: 15px;
+
+    border: 1px solid #ddd;
+
+    border-radius: 12px;
+
+    font-family: Arial, sans-serif;
+
+    font-size: 16px;
+
+    outline: none;
+}
+
+
+.create-post-card textarea:focus {
+    border-color: #f725c9;
+}
+
+
+/* =========================
+   Image Preview
+   ========================= */
+
+.create-post-preview {
+    width: 100%;
+
+    max-height: 300px;
+
+    object-fit: contain;
+
+    border-radius: 8px;
+
+    margin: 10px 0;
+}
+
+
+/* =========================
+   Post Metadata
+   ========================= */
+
+.create-post-meta {
+    margin: 10px 0;
+
+    font-size: 14px;
+}
+
+
+/* =========================
+   Footer
+   ========================= */
+
+.create-post-footer {
+    display: flex;
+
+    justify-content: flex-end;
+
+    gap: 10px;
+
+    margin-top: 15px;
+}
+
+
+.create-post-footer button {
+    padding: 10px 20px;
+
+    border: none;
+
+    border-radius: 20px;
+
+    cursor: pointer;
+}
+
+
+/* =========================
+   Cancel Button
+   ========================= */
+
+.cancel-post-button {
+    background: #eee;
+
+    color: #333;
+}
+
+
+/* =========================
+   Publish Button
+   ========================= */
+
+.publish-post-button {
+    background: #f725c9;
+
+    color: white;
+
+    font-weight: bold;
+}
+
+
+/* =========================
+   Mobile
+   ========================= */
+
+@media (max-width: 600px) {
+
+    .create-post-preview {
+        max-height: 250px;
+    }
+}

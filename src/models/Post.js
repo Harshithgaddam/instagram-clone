@@ -6,7 +6,6 @@ export class Post {
 
     this.comments = [];
 
-    // Private like counter
     let likeCount = 0;
 
     this.like = () => {

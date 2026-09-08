@@ -1,0 +1,292 @@
+/* =========================================================
+   INFINITE FEED SECTION
+   ========================================================= */
+
+.infinite-feed-section {
+    width: 100%;
+    margin-top: 0;
+}
+
+
+/* =========================================================
+   API IMAGE GRID
+   ========================================================= */
+
+
+
+
+/* =========================================================
+   API POST CARD
+   ========================================================= */
+
+.api-feed-card {
+    width: 100%;
+
+    aspect-ratio: 1 / 1;
+
+    overflow: hidden;
+
+    border-radius: 5%;
+
+    background: #eeeeee;
+}
+
+
+/* =========================================================
+   API IMAGE WRAPPER
+   ========================================================= */
+
+.api-feed-image-wrapper {
+    position: relative;
+
+    width: 100%;
+    height: 100%;
+
+    overflow: hidden;
+}
+
+
+/* =========================================================
+   API IMAGE
+   ========================================================= */
+
+.api-feed-image {
+    width: 100%;
+    height: 100%;
+
+    display: block;
+
+    object-fit: cover;
+
+    cursor: pointer;
+
+    transition: opacity 0.2s ease;
+}
+
+
+.api-feed-image:hover {
+    opacity: 0.85;
+}
+
+
+/* =========================================================
+   API IMAGE SKELETON
+   ========================================================= */
+
+.api-image-skeleton {
+    width: 100%;
+    height: 100%;
+
+    background: linear-gradient(
+        90deg,
+        #eeeeee 25%,
+        #dddddd 50%,
+        #eeeeee 75%
+    );
+
+    background-size: 200% 100%;
+
+    animation: apiImageSkeleton 1.4s infinite;
+}
+
+
+@keyframes apiImageSkeleton {
+
+    0% {
+        background-position: 200% 0;
+    }
+
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+
+/* =========================================================
+   API IMAGE ERROR
+   ========================================================= */
+
+.api-image-error {
+    width: 100%;
+    height: 100%;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    padding: 10px;
+
+    background: #f1f1f1;
+
+    color: #777;
+
+    font-size: 13px;
+
+    text-align: center;
+}
+
+
+/* =========================================================
+   LOADING MORE POSTS
+   ========================================================= */
+
+.infinite-feed-loading {
+    width: 100%;
+
+    margin-top: 8px;
+
+    text-align: center;
+}
+
+
+.infinite-feed-loading p {
+    margin-top: 10px;
+
+    color: #777;
+
+    font-size: 14px;
+}
+
+
+/* =========================================================
+   LOADING SKELETON
+   ========================================================= */
+
+.api-card-skeleton {
+    display: inline-block;
+
+    width: 31%;
+
+    aspect-ratio: 1 / 1;
+
+    margin: 1%;
+
+    border-radius: 5%;
+
+    background: linear-gradient(
+        90deg,
+        #eeeeee 25%,
+        #dddddd 50%,
+        #eeeeee 75%
+    );
+
+    background-size: 200% 100%;
+
+    animation: apiCardSkeleton 1.4s infinite;
+}
+
+
+@keyframes apiCardSkeleton {
+
+    0% {
+        background-position: 200% 0;
+    }
+
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+
+/* =========================================================
+   ERROR
+   ========================================================= */
+
+.infinite-feed-error {
+    width: 100%;
+
+    margin-top: 15px;
+
+    padding: 20px;
+
+    text-align: center;
+
+    border: 1px solid #ddd;
+
+    border-radius: 8px;
+
+    background: white;
+}
+
+
+.infinite-feed-error p {
+    margin-bottom: 10px;
+
+    color: #d00;
+}
+
+
+.infinite-feed-error button {
+    padding: 8px 16px;
+
+    border: none;
+
+    border-radius: 6px;
+
+    background: #f725c9;
+
+    color: white;
+
+    cursor: pointer;
+
+    font-weight: bold;
+}
+
+
+.infinite-feed-error button:hover {
+    opacity: 0.85;
+}
+
+
+.infinite-feed-error button:disabled {
+    opacity: 0.5;
+
+    cursor: default;
+}
+
+
+/* =========================================================
+   END OF FEED
+   ========================================================= */
+
+.infinite-feed-end {
+    width: 100%;
+
+    padding: 20px;
+
+    text-align: center;
+
+    color: #777;
+
+    font-size: 14px;
+}
+
+
+/* =========================================================
+   INFINITE SCROLL SENTINEL
+   ========================================================= */
+
+.feed-sentinel {
+    width: 100%;
+
+    height: 1px;
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 600px) {
+
+    .infinite-feed-list {
+        grid-template-columns: repeat(3, 1fr);
+
+        gap: 3px;
+    }
+
+    .api-card-skeleton {
+        width: 31%;
+    }
+}

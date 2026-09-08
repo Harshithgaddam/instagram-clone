@@ -1,0 +1,113 @@
+/* =========================================================
+   NOTIFICATION TOAST CONTAINER
+   ========================================================= */
+
+.notification-toast-container {
+    position: fixed;
+
+    top: 20px;
+    right: 20px;
+
+    z-index: 9999;
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 10px;
+
+    width: min(350px, calc(100vw - 40px));
+}
+
+
+/* =========================================================
+   NOTIFICATION TOAST
+   ========================================================= */
+
+.notification-toast {
+    padding: 14px 16px;
+
+    border-radius: 8px;
+
+    background: white;
+
+    border: 1px solid #ddd;
+
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+
+    font-size: 14px;
+
+    line-height: 1.4;
+
+    animation: toastSlideIn 0.25s ease;
+}
+
+
+/* =========================================================
+   Notification Types
+   ========================================================= */
+
+.notification-like {
+    border-left: 4px solid #ff3040;
+}
+
+
+.notification-unlike {
+    border-left: 4px solid #777;
+}
+
+
+.notification-comment {
+    border-left: 4px solid #1da1f2;
+}
+
+
+.notification-new-follower {
+    border-left: 4px solid #f725c9;
+}
+
+
+.notification-unfollow {
+    border-left: 4px solid #777;
+}
+
+
+.notification-repost {
+    border-left: 4px solid #f725c9;
+}
+
+
+/* =========================================================
+   Animation
+   ========================================================= */
+
+@keyframes toastSlideIn {
+
+    from {
+        opacity: 0;
+
+        transform: translateX(30px);
+    }
+
+    to {
+        opacity: 1;
+
+        transform: translateX(0);
+    }
+}
+
+
+/* =========================================================
+   Mobile
+   ========================================================= */
+
+@media (max-width: 600px) {
+
+    .notification-toast-container {
+        top: 10px;
+
+        right: 10px;
+
+        width: calc(100vw - 20px);
+    }
+}
