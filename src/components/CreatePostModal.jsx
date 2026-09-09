@@ -100,22 +100,7 @@ function CreatePostModal({
           }
         />
 
-        <div className="create-post-meta">
-          <p>
-            <strong>
-              Author:
-            </strong>{" "}
-            {currentUser}
-          </p>
-
-          <p>
-            <strong>
-              Uploaded time:
-            </strong>{" "}
-            current time when you post
-          </p>
-        </div>
-
+        
         <div className="create-post-footer">
           <button
             type="button"
