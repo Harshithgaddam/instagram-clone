@@ -90,26 +90,11 @@ function PostModal({
         }
       }}
     >
-      {/* -----------------------------------------
-          Close button
-          ----------------------------------------- */}
-      <button
-        className="close-button"
-        type="button"
-        onClick={onClose}
-        aria-label="Close post"
-      >
-        &times;
-      </button>
+      
 
       <div className="post-content">
-
-        {/* =========================================
-            IMAGE VIEWER
-            ========================================= */}
         <div className="post-viewer">
 
-          {/* Previous image */}
           {hasMultipleImages && (
             <button
               className="carousel-button left-button"
@@ -122,7 +107,7 @@ function PostModal({
             </button>
           )}
 
-          {/* Images */}
+
           <div
             className="post-images"
             ref={postImagesRef}
@@ -142,7 +127,6 @@ function PostModal({
             ))}
           </div>
 
-          {/* Next image */}
           {hasMultipleImages && (
             <button
               className="carousel-button right-button"
@@ -157,14 +141,12 @@ function PostModal({
             </button>
           )}
 
-          {/* Image counter */}
           {hasMultipleImages && (
             <div className="image-counter">
               {currentImageIndex + 1} / {images.length}
             </div>
           )}
 
-          {/* Thumbnails */}
           {hasMultipleImages && (
             <div className="image-thumbnails">
               {images.map((imageURL, index) => (
@@ -197,12 +179,9 @@ function PostModal({
           )}
         </div>
 
-        {/* =========================================
-            POST INFORMATION
-            ========================================= */}
         <div className="post-info">
 
-          {/* Close button */}
+  
           <button
             className="info-close-button"
             type="button"
@@ -212,9 +191,6 @@ function PostModal({
             &times;
           </button>
 
-          {/* -----------------------------------------
-              Post header
-              ----------------------------------------- */}
           <div className="post-header">
 
             <img
@@ -239,7 +215,7 @@ function PostModal({
               </p>
             </div>
 
-            {/* Follow button */}
+           
             {post.author !== currentUser && (
               <button
                 type="button"
@@ -255,16 +231,12 @@ function PostModal({
             )}
           </div>
 
-          {/* -----------------------------------------
-              Description
-              ----------------------------------------- */}
+         
           <div className="post-description">
             <p>{post.description}</p>
           </div>
 
-          {/* -----------------------------------------
-              Tags
-              ----------------------------------------- */}
+         
           {tags.length > 0 && (
             <div className="post-tags">
               {tags.map((tag) => (
@@ -275,9 +247,7 @@ function PostModal({
             </div>
           )}
 
-          {/* =========================================
-              COMMENTS
-              ========================================= */}
+          
           {showComments && (
             <Comments
               comments={comments}
