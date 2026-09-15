@@ -1,0 +1,100 @@
+/* =========================
+   Search Section
+   ========================= */
+
+.search-section {
+    margin-bottom: 30px;
+}
+
+
+/* =========================
+   Search Input
+   ========================= */
+
+#searchInput {
+    width: 100%;
+    padding: 14px 18px;
+
+    border: 1px solid #ccc;
+    border-radius: 25px;
+
+    font-size: 16px;
+    outline: none;
+
+    background-color: #fff;
+    color: #000;
+
+    color-scheme: light;
+}
+
+#searchInput::placeholder {
+    color: #777;
+}
+
+#searchInput:focus {
+    border-color: #1da1f2;
+}
+
+
+/* =========================
+   Search Results
+   ========================= */
+
+.search-results {
+    margin-top: 10px;
+
+    background: white;
+
+    border-radius: 12px;
+
+    overflow: hidden;
+
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+
+.search-result {
+    padding: 12px 18px;
+
+    border-bottom: 1px solid #eee;
+
+    cursor: pointer;
+}
+
+
+.search-result:hover {
+    background: #f5f8fa;
+}
+
+
+.no-results {
+    padding: 12px 18px;
+}
+
+
+/* =========================
+   Create Post Button
+   ========================= */
+
+.create-post-button {
+    width: 100%;
+
+    margin-bottom: 12px;
+
+    padding: 12px 18px;
+
+    border: none;
+    border-radius: 25px;
+
+    background: #f725c9;
+    color: white;
+
+    font-size: 16px;
+    font-weight: bold;
+
+    cursor: pointer;
+}
+
+.create-post-button:hover {
+    opacity: 0.9;
+}
