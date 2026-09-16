@@ -24,7 +24,7 @@ import { feedSeedPosts } from "./data/posts";
 
 import {
   API_PAGE_LIMIT,
-  fetchMockPosts,
+  fetchFeedPage,
   convertApiPostToFeedPost,
 } from "./api/postsApi";
 
@@ -251,8 +251,8 @@ function App() {
   const [apiHasMore, setApiHasMore] =
     useState(true);
 
-  const apiPageRef =
-    useRef(1);
+  const [apiNextCursor, setApiNextCursor] =
+  useState(null);
 
   const apiFetchingRef =
     useRef(false);
@@ -832,96 +832,89 @@ function App() {
   
 
   /* =====================================
-     Fetch Next API Page
-     ===================================== */
+   Fetch Next API Page
+   ===================================== */
 
-  const fetchNextApiPage =
-    useCallback(async () => {
-      if (
-        apiFetchingRef.current ||
-        !apiHasMore
-      ) {
-        return;
-      }
+const fetchNextApiPage =
+  useCallback(async () => {
+    if (
+      apiFetchingRef.current ||
+      !apiHasMore
+    ) {
+      return;
+    }
 
-      apiFetchingRef.current = true;
+    apiFetchingRef.current = true;
 
-      setApiLoading(true);
-      setApiError("");
+    setApiLoading(true);
+    setApiError("");
 
-      const page =
-        apiPageRef.current;
+    try {
+      const data =
+        await fetchFeedPage({
+          cursor: apiNextCursor,
+          limit: API_PAGE_LIMIT,
+        });
 
-      try {
-        const data =
-          await fetchMockPosts(page);
+      const incomingPosts =
+        Array.isArray(data.items)
+          ? data.items.map(
+              convertApiPostToFeedPost
+            )
+          : [];
 
-        const incomingPosts =
-          Array.isArray(data.posts)
-            ? data.posts.map(
-                convertApiPostToFeedPost
+      const uniquePosts =
+        incomingPosts.filter(
+          (post) => {
+            if (
+              apiLoadedIdsRef.current.has(
+                post.id
               )
-            : [];
-
-        const uniquePosts =
-          incomingPosts.filter(
-            (post) => {
-              if (
-                apiLoadedIdsRef.current.has(
-                  post.apiId
-                )
-              ) {
-                return false;
-              }
-
-              apiLoadedIdsRef.current.add(
-                post.apiId
-              );
-
-              return true;
+            ) {
+              return false;
             }
-          );
 
-        setApiPosts(
-          (previousPosts) => [
-            ...previousPosts,
-            ...uniquePosts,
-          ]
+            apiLoadedIdsRef.current.add(
+              post.id
+            );
+
+            return true;
+          }
         );
 
-        const nextSkip =
-          page * API_PAGE_LIMIT;
+      setApiPosts(
+        (previousPosts) => [
+          ...previousPosts,
+          ...uniquePosts,
+        ]
+      );
 
-        const total =
-          Number(data.total ?? 0);
+      setApiNextCursor(
+        data.nextCursor ?? null
+      );
 
-        setApiHasMore(
-          uniquePosts.length > 0 &&
-            nextSkip < total
-        );
+      setApiHasMore(
+        Boolean(data.hasMore)
+      );
+    } catch (error) {
+      console.error(
+        "Infinite feed error:",
+        error
+      );
 
-        if (uniquePosts.length > 0) {
-          apiPageRef.current =
-            page + 1;
-        } else {
-          setApiHasMore(false);
-        }
-      } catch (error) {
-        console.error(
-          "Infinite feed error:",
-          error
-        );
-
-        setApiError(
-          error instanceof Error
-            ? error.message
-            : "Unable to load the feed."
-        );
-      } finally {
-        apiFetchingRef.current = false;
-        setApiLoading(false);
-      }
-    }, [apiHasMore]);
+      setApiError(
+        error instanceof Error
+          ? error.message
+          : "Unable to load the feed."
+      );
+    } finally {
+      apiFetchingRef.current = false;
+      setApiLoading(false);
+    }
+  }, [
+    apiHasMore,
+    apiNextCursor,
+  ]);
 
   /* =====================================
      Initial API Fetch

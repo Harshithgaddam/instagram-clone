@@ -6,7 +6,7 @@ function Comments({
   onAddComment,
 }) {
   return (
-    <div className="comments-section">
+    <div className="comments-section"> 
       <h3>Comments</h3>
 
       <div className="comment-list">
