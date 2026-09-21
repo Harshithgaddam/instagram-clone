@@ -69,15 +69,40 @@ function PostModal({
   // -----------------------------------------
   // Safe values for normal/API posts
   // -----------------------------------------
-  const images = Array.isArray(post.images)
+  const images =
+  Array.isArray(post.images)
     ? post.images
-    : post.src
-      ? [post.src]
-      : [];
+    : [];
 
-  const tags = Array.isArray(post.tags)
+const tags =
+  Array.isArray(post.tags)
     ? post.tags
     : [];
+
+const authorName =
+  post.author ??
+  post.authorDisplayName ??
+  "";
+
+const description =
+  post.description ??
+  post.text ??
+  "";
+
+const avatar =
+  post.avatarLargeUrl ??
+  post.avatarSmallUrl ??
+  "";
+
+const likeCount =
+  post.likeCount ??
+  post.likes ??
+  0;
+
+const replyCount =
+  post.replyCount ??
+  post.comments?.length ??
+  0;
 
   const hasMultipleImages = images.length > 1;
 
@@ -195,7 +220,7 @@ function PostModal({
 
             <img
               className="post-avatar"
-              src={post.src}
+              src={avatar}
               srcSet={getResponsiveSrcSet(post.src)}
               sizes="50px"
               width="50"
@@ -206,7 +231,11 @@ function PostModal({
             />
 
             <div>
-              <h2>{post.author}</h2>
+              <h2>
+  {post.authorDisplayName ||
+    post.author ||
+    ""}
+</h2>
 
               <p>
                 {post.title}
@@ -233,7 +262,7 @@ function PostModal({
 
          
           <div className="post-description">
-            <p>{post.description}</p>
+            <p>{description}</p>
           </div>
 
          
@@ -281,6 +310,10 @@ function PostModal({
               <span>
                 {isLiked ? "Unlike" : "Like"}
               </span>
+
+              <span className="post-action-count">
+                {likeCount}
+              </span>
             </button>
 
             {/* ---------------------------------------
@@ -299,6 +332,10 @@ function PostModal({
 
               <span>
                 {showComments ? "Hide Comments" : "Comment"}
+              </span>
+
+              <span className="post-action-count">
+                {replyCount}
               </span>
             </button>
 
