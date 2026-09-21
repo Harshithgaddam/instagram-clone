@@ -107,12 +107,12 @@ async getFeed(
     }
 
     return this.feedService.getPosts({
-      kind: 'original',
-      limit: parsedLimit,
-      cursorCreatedAt:
-        decodedCursor?.createdAt,
-      cursorId:
-        decodedCursor?.id,
-    });
+  kind: 'original',
+  limit: parsedLimit,
+  cursorCreatedAt: decodedCursor?.createdAt
+    ? new Date(decodedCursor.createdAt)
+    : undefined,
+  cursorId: decodedCursor?.id,
+});
   }
 }
