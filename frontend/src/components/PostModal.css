@@ -509,6 +509,15 @@
 }
 
 
+.post-info .post-actions .post-action-count {
+    margin-top: -2px;
+
+    font-weight: 700;
+
+    color: #222;
+}
+
+
 /* =========================
    Liked Heart
    ========================= */

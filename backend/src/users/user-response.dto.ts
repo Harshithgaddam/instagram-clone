@@ -4,11 +4,9 @@ export class UserResponseDto {
   id: string;
   handle: string;
   displayName: string;
-  bio: string;
-  avatar: {
-    smallUrl: string;
-    largeUrl: string;
-  };
+  bio: string | null;
+ avatarSmallUrl: string | null;
+avatarLargeUrl: string | null;
   postCount: number;
   followerCount: number;
   followingCount: number;

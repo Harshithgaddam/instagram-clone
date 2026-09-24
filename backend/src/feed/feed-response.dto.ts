@@ -2,18 +2,14 @@ export class FeedAuthorDto {
   id: string;
   handle: string;
   displayName: string;
-  avatar: {
-    smallUrl: string;
-    largeUrl: string;
-  };
+  bio: string | null;
+  avatarSmallUrl: string | null;
+  avatarLargeUrl: string | null;
 }
 
 export class FeedMediaDto {
   id: string;
   altText: string;
-  width: number;
-  height: number;
-  position: number;
   smallUrl: string;
   largeUrl: string;
 }

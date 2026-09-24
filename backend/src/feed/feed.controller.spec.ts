@@ -1,12 +1,15 @@
 import { jest } from '@jest/globals';
 
 import { FeedController } from './feed.controller';
+import { FeedResponseDto } from './feed-response.dto';
 
 describe('FeedController', () => {
   let controller: FeedController;
 
   const feedService = {
-    getPosts: jest.fn(),
+    getPosts: jest.fn<
+      () => Promise<FeedResponseDto>
+    >(),
   };
 
   beforeEach(() => {

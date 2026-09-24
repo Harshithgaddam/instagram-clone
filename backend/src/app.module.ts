@@ -15,7 +15,8 @@ import { UsersModule } from './users/users.module';
 import { PostsModule } from './posts/posts.module';
 import { FeedModule } from './feed/feed.module';
 import { DataModule } from './data/data.module';
-
+import { DatabaseModule } from './database/database.module';
+import {SearchModule} from './search/search.module';
 import {
   RequestIdMiddleware,
 } from './common/request-id.middleware';
@@ -30,12 +31,13 @@ import {
       isGlobal: true,
       load: [configuration],
     }),
-
+    DatabaseModule,
     HealthModule,
     UsersModule,
     PostsModule,
     FeedModule,
     DataModule,
+    SearchModule,
   ],
 })
 export class AppModule
