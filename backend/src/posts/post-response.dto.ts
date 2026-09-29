@@ -4,18 +4,14 @@ export class PostAuthorDto {
   id: string;
   handle: string;
   displayName: string;
-  avatar: {
-    smallUrl: string;
-    largeUrl: string;
-  };
+  bio: string | null;
+  avatarSmallUrl: string | null;
+  avatarLargeUrl: string | null;
 }
 
 export class PostMediaDto {
   id: string;
   altText: string;
-  width: number;
-  height: number;
-  position: number;
   smallUrl: string;
   largeUrl: string;
 }

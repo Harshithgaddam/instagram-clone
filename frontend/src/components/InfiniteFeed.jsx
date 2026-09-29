@@ -1,5 +1,8 @@
 import "./InfiniteFeed.css";
-import { useEffect, useRef } from "react";
+import {
+  useEffect,
+  useRef,
+} from "react";
 
 function InfiniteFeed({
   apiPosts,
@@ -10,50 +13,64 @@ function InfiniteFeed({
   fetchNextApiPage,
   onPostClick,
 }) {
-  const apiSentinelRef = useRef(null);
+  const apiSentinelRef =
+    useRef(null);
 
   useEffect(() => {
-    const sentinel = apiSentinelRef.current;
+    const sentinel =
+      apiSentinelRef.current;
 
     if (!sentinel) {
       return;
     }
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const entry = entries[0];
+    const observer =
+      new IntersectionObserver(
+        (entries) => {
+          const entry =
+            entries[0];
 
-        if (entry?.isIntersecting) {
-          fetchNextApiPage();
-        }
-      },
-      {
-        root: null,
-        rootMargin: "400px 0px",
-        threshold: 0,
-      }
-    );
+          if (
+            entry?.isIntersecting &&
+            apiHasMore &&
+            !apiLoading
+          ) {
+            fetchNextApiPage();
+          }
+        },
+        {
+          root: null,
+          rootMargin: "400px 0px",
+          threshold: 0,
+        },
+      );
 
     observer.observe(sentinel);
 
-    return () => observer.disconnect();
-  }, [apiHasMore, fetchNextApiPage]);
+    return () =>
+      observer.disconnect();
+  }, [
+    apiHasMore,
+    apiLoading,
+    fetchNextApiPage,
+  ]);
 
   return (
     <section className="infinite-feed-section">
-
       <div className="infinite-feed-list">
         {apiPosts.map((post) => {
-          const imageStatus = apiImageStatus[post.id];
+          const imageStatus =
+            apiImageStatus[post.id];
 
           return (
             <article
               className="api-feed-card"
               key={post.id}
-             onClick={() => onPostClick(post)}
+              onClick={() =>
+                onPostClick(post)
+              }
             >
               <div className="api-feed-image-wrapper">
-
                 {!imageStatus && (
                   <div className="api-image-skeleton" />
                 )}
@@ -73,7 +90,6 @@ function InfiniteFeed({
                     Image could not be loaded.
                   </div>
                 )}
-
               </div>
             </article>
           );
@@ -100,11 +116,12 @@ function InfiniteFeed({
         </div>
       )}
 
-      {!apiHasMore && apiPosts.length > 0 && (
-        <p className="infinite-feed-end">
-          You reached the end of the feed.
-        </p>
-      )}
+      {!apiHasMore &&
+        apiPosts.length > 0 && (
+          <p className="infinite-feed-end">
+            You reached the end of the feed.
+          </p>
+        )}
 
       <div
         ref={apiSentinelRef}

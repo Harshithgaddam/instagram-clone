@@ -31,7 +31,10 @@ app.enableCors({
   const port =
     configService.get<number>('port') ?? 3000;
 
+    app.enableShutdownHooks();
+    
   await app.listen(port);
+  
 }
 
 bootstrap();

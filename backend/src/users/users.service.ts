@@ -6,10 +6,11 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 
-import { USER_REPOSITORY } from '../data/data.tokens';
+import { USER_REPOSITORY,POST_REPOSITORY } from '../data/data.tokens';
 
 import type { UserRepository } from '../data/user.repository';
-
+import type { PostRepository } from '../data/post.repository';
+import type { FeedCursor } from '../data/repository.types';
 import {
   UserDetailResponseDto,
 } from './user-response.dto';
@@ -17,9 +18,12 @@ import {
 @Injectable()
 export class UsersService {
   constructor(
-    @Inject(USER_REPOSITORY)
-    private readonly userRepository: UserRepository,
-  ) {}
+  @Inject(USER_REPOSITORY)
+  private readonly userRepository: UserRepository,
+
+  @Inject(POST_REPOSITORY)
+  private readonly postRepository: PostRepository,
+) {}
 
   async getUser(
     id: string,
@@ -49,11 +53,24 @@ export class UsersService {
         handle: user.handle,
         displayName: user.displayName,
         bio: user.bio,
-        avatar: user.avatar,
+       avatarSmallUrl: user.avatarSmallUrl,
+        avatarLargeUrl: user.avatarLargeUrl,
         postCount,
         followerCount,
         followingCount,
       },
     };
   }
+
+  async getUserMedia(
+  userId: string,
+  cursor: FeedCursor | null,
+  limit: number,
+) {
+  return this.postRepository.listProfileMedia(
+    userId,
+    cursor,
+    limit,
+  );
+}
 }

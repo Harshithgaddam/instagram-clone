@@ -1,6 +1,10 @@
 import "./ProfileGrid.css";
 
-function ProfileGrid({ posts, onPostClick }) {
+function ProfileGrid({
+  posts,
+  onPostClick,
+  loading = false,
+}) {
   return (
     <div className="profile-grid">
       {posts.map((post) => (
@@ -13,10 +17,18 @@ function ProfileGrid({ posts, onPostClick }) {
             alt={post.alt}
             loading="lazy"
             decoding="async"
-            onClick={() => onPostClick(post)}
+            onClick={() =>
+              onPostClick(post)
+            }
           />
         </article>
       ))}
+
+      {loading && (
+        <div className="profile-grid-loading">
+          Loading...
+        </div>
+      )}
     </div>
   );
 }

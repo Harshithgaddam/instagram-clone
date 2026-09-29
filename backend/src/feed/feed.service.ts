@@ -24,6 +24,12 @@ import {
 
 import { encodeCursor } from '../common/cursor';
 
+interface DatabaseMediaImage {
+  alt_text: string;
+  small_url: string;
+  large_url: string;
+}
+
 @Injectable()
 export class FeedService {
   constructor(
@@ -36,50 +42,51 @@ export class FeedService {
     private readonly configService: ConfigService,
   ) {}
 
-  async getPosts(
-    options?: FindPostsOptions,
-  ): Promise<FeedResponseDto> {
-    const posts =
-      await this.postRepository.findAll(options);
+ async getPosts(
+  options?: FindPostsOptions,
+): Promise<FeedResponseDto> {
+  const limit = options?.limit ?? 10;
 
-    const limit = options?.limit ?? 10;
+  const cursor =
+    options?.cursorCreatedAt &&
+    options?.cursorId
+      ? {
+          createdAt: options.cursorCreatedAt,
+          id: options.cursorId,
+        }
+      : null;
 
-    const hasMore =
-      posts.length > limit;
+  const viewerId =
+    this.configService.getOrThrow<string>(
+      'demoUserId',
+    );
 
-    const postsToReturn =
-      posts.slice(0, limit);
+  const result =
+    await this.postRepository.listOriginalFeed(
+      cursor,
+      limit,
+      viewerId,
+    );
 
-    const items =
-      await Promise.all(
-        postsToReturn.map((post) =>
-          this.mapPost(post.id),
-        ),
-      );
+  const items = await Promise.all(
+    result.items.map((post) =>
+      this.mapPost(post.id),
+    ),
+  );
 
-    let nextCursor: string | null = null;
+  const nextCursor = result.nextCursor
+    ? encodeCursor(
+        result.nextCursor.createdAt.toISOString(),
+        result.nextCursor.id,
+      )
+    : null;
 
-    if (
-      hasMore &&
-      postsToReturn.length > 0
-    ) {
-      const lastPost =
-        postsToReturn[
-          postsToReturn.length - 1
-        ];
-
-      nextCursor = encodeCursor(
-        lastPost.createdAt,
-        lastPost.id,
-      );
-    }
-
-    return {
-      items,
-      nextCursor,
-      hasMore,
-    };
-  }
+  return {
+    items,
+    nextCursor,
+    hasMore: result.hasMore,
+  };
+}
 
   private async mapPost(
     postId: string,
@@ -142,27 +149,27 @@ export class FeedService {
           ? null
           : post.text,
 
-      createdAt: post.createdAt,
+      createdAt: post.createdAt.toISOString(),
 
       author: {
-        id: author.id,
-        handle: author.handle,
-        displayName: author.displayName,
-        avatar: author.avatar,
-      },
+  id: author.id,
+  handle: author.handle,
+  displayName: author.displayName,
+  bio: author.bio,
+  avatarSmallUrl: author.avatarSmallUrl,
+  avatarLargeUrl: author.avatarLargeUrl,
+},
 
-      media:
-        post.kind === 'repost'
-          ? []
-          : media.map((item) => ({
-              id: item.id,
-              altText: item.altText,
-              width: item.width,
-              height: item.height,
-              position: item.position,
-              smallUrl: item.smallUrl,
-              largeUrl: item.largeUrl,
-            })),
+  media: media.flatMap((item) =>
+  (item.images as unknown as DatabaseMediaImage[]).map(
+    (image) => ({
+      id: item.id,
+      altText: image.alt_text,
+      smallUrl: image.small_url,
+      largeUrl: image.large_url,
+    }),
+  ),
+),
 
       likeCount,
       replyCount,

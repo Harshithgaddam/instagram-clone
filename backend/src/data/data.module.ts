@@ -2,23 +2,25 @@
 
 import { Module } from '@nestjs/common';
 
-import { FixturePostRepository } from './fixture.repository';
-import { FixtureUserRepository } from './fixture.user.repository';
+import { POST_REPOSITORY } from './data.tokens';
+import { USER_REPOSITORY } from './data.tokens';
 
-import {
-  POST_REPOSITORY,
-  USER_REPOSITORY,
-} from './data.tokens';
+import { TypeOrmPostRepository } from './typeorm-post.repository';
+import { TypeOrmUserRepository } from './typeorm-user.repository';
 
 @Module({
   providers: [
+    TypeOrmPostRepository,
+    TypeOrmUserRepository,
+
     {
       provide: POST_REPOSITORY,
-      useClass: FixturePostRepository,
+      useExisting: TypeOrmPostRepository,
     },
+
     {
       provide: USER_REPOSITORY,
-      useClass: FixtureUserRepository,
+      useExisting: TypeOrmUserRepository,
     },
   ],
 

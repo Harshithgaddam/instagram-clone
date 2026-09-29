@@ -1,5 +1,3 @@
-// src/config/configuration.ts
-
 import { users } from '../data/fixtures';
 
 const UUID_REGEX =
@@ -21,7 +19,18 @@ export default () => {
     process.env.SIMULATED_IO_MS ?? 0,
   );
 
-  // Validate PORT
+  const databaseUrl =
+    process.env.DATABASE_URL ?? '';
+
+  const databaseConnectTimeoutMs = Number(
+    process.env.DATABASE_CONNECT_TIMEOUT_MS ??
+      5000,
+  );
+
+  // --------------------------------------------------
+  // PORT
+  // --------------------------------------------------
+
   if (
     !Number.isInteger(port) ||
     port < 1 ||
@@ -32,7 +41,10 @@ export default () => {
     );
   }
 
-  // Validate FRONTEND_ORIGIN
+  // --------------------------------------------------
+  // FRONTEND_ORIGIN
+  // --------------------------------------------------
+
   try {
     const origin = new URL(frontendOrigin);
 
@@ -48,7 +60,10 @@ export default () => {
     );
   }
 
-  // Validate DEMO_USER_ID
+  // --------------------------------------------------
+  // DEMO_USER_ID
+  // --------------------------------------------------
+
   if (!UUID_REGEX.test(demoUserId)) {
     throw new Error(
       'DEMO_USER_ID must be a valid UUID',
@@ -65,7 +80,10 @@ export default () => {
     );
   }
 
-  // Validate SIMULATED_IO_MS
+  // --------------------------------------------------
+  // SIMULATED_IO_MS
+  // --------------------------------------------------
+
   if (
     !Number.isInteger(simulatedIoMs) ||
     simulatedIoMs < 0 ||
@@ -76,10 +94,61 @@ export default () => {
     );
   }
 
+  // --------------------------------------------------
+  // DATABASE_URL
+  // --------------------------------------------------
+
+  if (!databaseUrl) {
+    throw new Error(
+      'DATABASE_URL is required',
+    );
+  }
+
+  try {
+    const url = new URL(databaseUrl);
+
+    if (url.protocol !== 'postgresql:') {
+      throw new Error();
+    }
+
+    if (!url.hostname) {
+      throw new Error();
+    }
+
+    if (
+      !url.pathname ||
+      url.pathname === '/'
+    ) {
+      throw new Error();
+    }
+  } catch {
+    throw new Error(
+      'DATABASE_URL must be a valid PostgreSQL connection URL',
+    );
+  }
+
+  // --------------------------------------------------
+  // DATABASE_CONNECT_TIMEOUT_MS
+  // --------------------------------------------------
+
+  if (
+    !Number.isInteger(
+      databaseConnectTimeoutMs,
+    ) ||
+    databaseConnectTimeoutMs < 1000 ||
+    databaseConnectTimeoutMs > 30000
+  ) {
+    throw new Error(
+      'DATABASE_CONNECT_TIMEOUT_MS must be an integer from 1000 to 30000',
+    );
+  }
+
   return {
     port,
     frontendOrigin,
     demoUserId,
     simulatedIoMs,
+    databaseUrl,
+    databaseConnectTimeoutMs,
   };
 };

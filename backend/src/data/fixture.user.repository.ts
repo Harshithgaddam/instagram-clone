@@ -13,7 +13,7 @@ import {
 
 @Injectable()
 export class FixtureUserRepository
-  implements UserRepository
+ // implements UserRepository
 {
   async findById(
     id: string,
@@ -28,9 +28,8 @@ export class FixtureUserRepository
 
     return {
       ...user,
-      avatar: {
-        ...user.avatar,
-      },
+      avatarSmallUrl: user.avatar.smallUrl ?? null,
+      avatarLargeUrl: user.avatar.largeUrl ?? null,
     };
   }
 

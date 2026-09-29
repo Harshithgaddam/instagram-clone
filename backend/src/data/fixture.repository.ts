@@ -12,7 +12,7 @@ import { posts, media, likes } from './fixtures';
 
 @Injectable()
 export class FixturePostRepository
-  implements PostRepository
+  //implements PostRepository
 {
   private readFailureForTests = false;
 
@@ -69,9 +69,7 @@ export class FixturePostRepository
 
     result.sort((a, b) => {
       const createdAtDifference =
-        b.createdAt.localeCompare(
-          a.createdAt,
-        );
+        b.createdAt.getTime() - a.createdAt.getTime();
 
       if (createdAtDifference !== 0) {
         return createdAtDifference;
@@ -137,10 +135,6 @@ export class FixturePostRepository
       .filter(
         (item) =>
           item.postId === postId,
-      )
-      .sort(
-        (a, b) =>
-          a.position - b.position,
       )
       .map((item) => cloneMedia(item));
   }

@@ -4,17 +4,15 @@ function SearchSection({
   searchText,
   setSearchText,
   searchQuery,
-  filteredPosts,
-  filteredApiPosts,
   onCreatePost,
+  searchResults,
+  searchLoading,
+  searchError,
+  searchHasMore,
+  fetchNextSearchPage,
+  onSearchPostClick,
 }) {
-  const totalResults =
-    filteredPosts.length +
-    filteredApiPosts.length;
-
-  const showNoResults =
-    searchQuery.trim() !== "" &&
-    totalResults === 0;
+  
 
   return (
     <section className="search-section">
@@ -33,13 +31,72 @@ function SearchSection({
         autoComplete="on"
         value={searchText}
         onChange={(event) =>
-          setSearchText(event.target.value)
+          setSearchText(
+            event.target.value,
+          )
         }
       />
 
-      {showNoResults && (
-        <div className="no-results">
-          No posts found
+      {searchQuery.trim() !== "" && (
+        <div className="search-results">
+          {searchResults.map((post) => (
+            <article
+              key={post.id}
+              className="search-result"
+              onClick={() =>
+                onSearchPostClick(post)
+              }
+            >
+              <img src={post.smallUrl} />
+              <strong>
+                {post.title}
+              </strong>
+
+              <p>
+                {post.description}
+              </p>
+            </article>
+          ))}
+
+          {searchLoading && (
+            <p>Searching...</p>
+          )}
+
+          {searchError && (
+            <div className="search-error">
+              <p>{searchError}</p>
+
+              <button
+                type="button"
+                onClick={() =>
+                  fetchNextSearchPage(false)
+                }
+                disabled={searchLoading}
+              >
+                Retry
+              </button>
+            </div>
+          )}
+
+          {!searchLoading &&
+            !searchError &&
+            searchResults.length === 0 && (
+              <div className="no-results">
+                No posts found
+              </div>
+            )}
+
+          {searchHasMore &&
+            !searchLoading && (
+              <button
+                type="button"
+                onClick={() =>
+                  fetchNextSearchPage(false)
+                }
+              >
+                Load more
+              </button>
+            )}
         </div>
       )}
     </section>
