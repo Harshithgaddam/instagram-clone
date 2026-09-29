@@ -605,6 +605,9 @@ export class PostsService {
       likedByViewer:
         post.likedByViewer,
 
+      repostedByViewer:
+        post.repostedByViewer,
+
       replyToId:  
         post.replyToId,
 
@@ -652,4 +655,51 @@ export class PostsService {
       'Internal server error',
     );
   }
+
+  // ============================================================
+// DELETE /posts/:id
+// ============================================================
+
+async deletePost(
+  postId: string,
+): Promise<{ id: string }> {
+  try {
+    await this.postRepository.deletePost(
+      postId,
+    );
+
+    return {
+      id: postId,
+    };
+  } catch (error) {
+    this.handleRepositoryError(error);
+  }
+}
+
+async undoRepost(
+  originalPostId: string,
+): Promise<{ id: string }> {
+  const viewerId =
+    this.getDemoUserId();
+
+  const repostId =
+    await this.postRepository.findViewerRepostId(
+      originalPostId,
+      viewerId,
+    );
+
+  if (!repostId) {
+    throw new NotFoundException(
+      'Repost not found',
+    );
+  }
+
+  await this.postRepository.deletePost(
+    repostId,
+  );
+
+  return {
+    id: repostId,
+  };
+}
 }

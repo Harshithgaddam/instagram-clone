@@ -20,6 +20,18 @@ describe('FeedService', () => {
       ) => Promise<Post[]>
     >(),
 
+    listOriginalFeed: jest.fn<
+      (
+        cursor: { createdAt: Date; id: string } | null,
+        limit: number,
+        viewerId: string,
+      ) => Promise<{
+        items: any[];
+        nextCursor: null;
+        hasMore: boolean;
+      }>
+    >(),
+
     findById: jest.fn<
       (
         id: string,
@@ -66,6 +78,12 @@ describe('FeedService', () => {
         key: string,
       ) => string | undefined
     >(),
+
+    getOrThrow: jest.fn<
+      (
+        key: string,
+      ) => string
+    >(),
   };
 
   let service: FeedService;
@@ -74,6 +92,9 @@ describe('FeedService', () => {
     jest.clearAllMocks();
 
     fakeConfigService.get.mockReturnValue(
+      'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+    );
+    fakeConfigService.getOrThrow.mockReturnValue(
       'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
     );
 
@@ -87,22 +108,24 @@ describe('FeedService', () => {
   it(
     'should map posts returned by the repository',
     async () => {
-      fakePostRepository.findAll.mockResolvedValue([
-        {
-          id:
-            '11111111-1111-4111-8111-111111111111',
-
-          kind: 'original',
-
-          authorId:
-            'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
-
-          text: 'Test post',
-
-          createdAt:
-            '2026-09-01T10:00:00.000Z',
-        },
-      ]);
+      fakePostRepository.listOriginalFeed.mockResolvedValue({
+        items: [
+          {
+            id:
+              '11111111-1111-4111-8111-111111111111',
+            kind: 'original',
+            authorId:
+              'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+            text: 'Test post',
+            createdAt:
+              new Date('2026-09-01T10:00:00.000Z'),
+            replyToId: null,
+            repostOfId: null,
+          },
+        ],
+        nextCursor: null,
+        hasMore: false,
+      });
 
       fakePostRepository.findById.mockResolvedValue({
         id:
@@ -116,7 +139,7 @@ describe('FeedService', () => {
         text: 'Test post',
 
         createdAt:
-          '2026-09-01T10:00:00.000Z',
+          new Date('2026-09-01T10:00:00.000Z'),
       });
 
       fakeUserRepository.findById.mockResolvedValue({
@@ -173,11 +196,12 @@ describe('FeedService', () => {
       });
 
       expect(
-        fakePostRepository.findAll,
-      ).toHaveBeenCalledWith({
-        kind: 'original',
-        limit: 10,
-      });
+        fakePostRepository.listOriginalFeed,
+      ).toHaveBeenCalledWith(
+        null,
+        10,
+        'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+      );
     },
   );
 });

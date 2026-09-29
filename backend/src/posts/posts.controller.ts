@@ -93,4 +93,27 @@ export class PostsController {
       id,
     );
   }
+  // ============================================================
+// DELETE /posts/:id
+// ============================================================
+
+@Delete(':id')
+@HttpCode(HttpStatus.OK)
+async deletePost(
+  @Param('id') id: string,
+) {
+  validateUuid(id, 'id');
+
+  return this.postsService.deletePost(id);
+}
+
+@Delete(':id/repost')
+@HttpCode(HttpStatus.OK)
+async undoRepost(
+  @Param('id') id: string,
+) {
+  validateUuid(id, 'id');
+
+  return this.postsService.undoRepost(id);
+}
 }

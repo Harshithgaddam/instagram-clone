@@ -26,10 +26,8 @@ describe('UsersService', () => {
       handle: 'asha',
       displayName: 'Asha',
       bio: 'Hello',
-      avatar: {
-        smallUrl: '/fixtures/asha-48.jpg',
-        largeUrl: '/fixtures/asha-96.jpg',
-      },
+      avatarSmallUrl: '/fixtures/asha-48.jpg',
+      avatarLargeUrl: '/fixtures/asha-96.jpg',
     });
 
     userRepository.countOriginalPosts.mockResolvedValue(5);
@@ -46,10 +44,8 @@ describe('UsersService', () => {
         handle: 'asha',
         displayName: 'Asha',
         bio: 'Hello',
-        avatar: {
-          smallUrl: '/fixtures/asha-48.jpg',
-          largeUrl: '/fixtures/asha-96.jpg',
-        },
+        avatarSmallUrl: '/fixtures/asha-48.jpg',
+        avatarLargeUrl: '/fixtures/asha-96.jpg',
         postCount: 5,
         followerCount: 3,
         followingCount: 2,

@@ -9,6 +9,7 @@ import {
 import request from 'supertest';
 
 import { AppModule } from '../src/app.module';
+import { HttpExceptionFilter } from '../src/common/http-exception.filter';
 
 describe('A3 API', () => {
   let app: INestApplication;
@@ -22,6 +23,7 @@ describe('A3 API', () => {
     app =
       moduleRef.createNestApplication();
 
+    app.useGlobalFilters(new HttpExceptionFilter());
     await app.init();
   });
 
@@ -161,7 +163,7 @@ describe('A3 API', () => {
         app.getHttpServer(),
       )
         .get(
-          '/posts/99999999-9999-4999-8999-999999999999',
+          '/posts/99999999-9999-4999-8999-999999999998',
         )
         .expect(404);
 
@@ -201,7 +203,7 @@ describe('A3 API', () => {
         app.getHttpServer(),
       )
         .get(
-          '/users/99999999-9999-4999-8999-999999999999',
+          '/users/99999999-9999-4999-8999-999999999998',
         )
         .expect(404);
 

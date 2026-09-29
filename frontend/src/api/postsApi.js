@@ -301,6 +301,11 @@ export const convertApiPostToFeedPost = (
         post.likedByViewer,
       ),
 
+    repostedByViewer:
+      Boolean(
+        post.repostedByViewer,
+      ),
+
     replyToId:
       post.replyToId ?? null,
 
@@ -324,4 +329,25 @@ export const convertProfileMediaToFeedPost = (
 
 export {
   API_PAGE_LIMIT,
+};
+export const deletePost = async (
+  postId,
+) => {
+  return request(
+    `/posts/${postId}`,
+    {
+      method: "DELETE",
+    },
+  );
+};
+
+export const undoRepost = async (
+  originalPostId,
+) => {
+  return request(
+    `/posts/${originalPostId}/repost`,
+    {
+      method: "DELETE",
+    },
+  );
 };

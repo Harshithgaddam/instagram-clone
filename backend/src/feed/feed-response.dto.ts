@@ -26,6 +26,7 @@ export class FeedPostResponseDto {
   likeCount: number;
   replyCount: number;
   likedByViewer: boolean;
+  repostedByViewer: boolean;
 
   replyToId: string | null;
   repostOfId: string | null;

@@ -23,6 +23,8 @@ function PostModal({
   onToggleLike,
   isReposted,
   onRepost,
+  onDelete,
+  onDeleteComment,
 }) {
   const postImagesRef = useRef(null);
 
@@ -258,6 +260,15 @@ const replyCount =
                   : "Follow"}
               </button>
             )}
+            {post.author === currentUser && (
+  <button
+    type="button"
+    onClick={onDelete}
+    aria-label="Delete post"
+  >
+    Delete
+  </button>
+)}
           </div>
 
          
@@ -283,6 +294,7 @@ const replyCount =
               commentText={commentText}
               setCommentText={setCommentText}
               onAddComment={onAddComment}
+              onDeleteComment={onDeleteComment}
             />
           )}
 

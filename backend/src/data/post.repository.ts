@@ -225,4 +225,13 @@ export interface PostRepository {
     viewerId: string,
     desiredState: boolean,
   ): Promise<LikeResult>;
+
+  deletePost(
+    postId: string,
+  ): Promise<void>;
+
+  findViewerRepostId(
+    postId: string,
+    viewerId: string,
+  ): Promise<string | null>;
 }

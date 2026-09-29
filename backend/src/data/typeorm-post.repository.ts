@@ -904,6 +904,7 @@ async setLike(
       media,
       counts,
       likedIds,
+      repostedPostIds,
     ] = await Promise.all([
       this.getAuthors(
         authorIds,
@@ -918,6 +919,11 @@ async setLike(
       ),
 
       this.getViewerLikedIds(
+        postIds,
+        viewerId,
+      ),
+
+      this.getViewerRepostedPostIds(
         postIds,
         viewerId,
       ),
@@ -1033,6 +1039,11 @@ async setLike(
 
             likedByViewer:
               likedIds.has(
+                post.id,
+              ),
+
+            repostedByViewer:
+              repostedPostIds.has(
                 post.id,
               ),
           };
@@ -1308,6 +1319,48 @@ async setLike(
     );
   }
 
+  private async getViewerRepostedPostIds(
+    postIds: string[],
+    viewerId: string,
+  ): Promise<Set<string>> {
+    if (postIds.length === 0) {
+      return new Set();
+    }
+
+    const rows =
+      await this.posts
+        .createQueryBuilder('post')
+        .select(
+          'post.repost_of_id',
+          'postId',
+        )
+        .where(
+          'post.kind = :kind',
+          {
+            kind: PostKind.REPOST,
+          },
+        )
+        .andWhere(
+          'post.author_id = :viewerId',
+          {
+            viewerId,
+          },
+        )
+        .andWhere(
+          'post.repost_of_id IN (:...postIds)',
+          {
+            postIds,
+          },
+        )
+        .getRawMany();
+
+    return new Set(
+      rows.map(
+        (row) => row.postId,
+      ),
+    );
+  }
+
   // =========================================================
   // PRIVATE: CURSOR
   // =========================================================
@@ -1433,6 +1486,58 @@ async setLike(
         'INTERNAL',
         'Database operation failed',
       );
+  }
+}
+async deletePost(
+  postId: string,
+): Promise<void> {
+  try {
+    const result =
+      await this.posts.delete({
+        id: postId,
+      });
+
+    if (!result.affected) {
+      throw new RepositoryError(
+        'NOT_FOUND',
+        'Post not found',
+      );
+    }
+  } catch (error) {
+    const databaseError =
+      error as {
+        code?: string;
+      };
+
+    // An original cannot be deleted while replies/reposts reference it.
+    if (databaseError.code === '23503') {
+      throw new RepositoryError(
+        'CONFLICT',
+        'Cannot delete this post because replies or reposts reference it',
+      );
+    }
+
+    this.handleDatabaseError(error);
+  }
+}
+
+async findViewerRepostId(
+  postId: string,
+  viewerId: string,
+): Promise<string | null> {
+  try {
+    const repost =
+      await this.posts.findOne({
+        where: {
+          kind: PostKind.REPOST,
+          repostOfId: postId,
+          authorId: viewerId,
+        },
+      });
+
+    return repost?.id ?? null;
+  } catch (error) {
+    this.handleDatabaseError(error);
   }
 }
 }
