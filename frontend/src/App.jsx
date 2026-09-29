@@ -32,6 +32,8 @@ import {
   searchPosts,
   likePost,
   unlikePost,
+  deletePost,
+  undoRepost,
   createPost,
   convertApiPostToFeedPost,
   convertProfileMediaToFeedPost,
@@ -486,6 +488,14 @@ const [
           convertApiPostToFeedPost(
             data.item,
           );
+
+        setRepostedPosts((previousPosts) => ({
+          ...previousPosts,
+          [detailedPost.id]:
+            Boolean(
+              detailedPost.repostedByViewer,
+            ),
+        }));
 
         detailedPost.comments =
           (repliesData?.items ?? []).map(
@@ -1048,6 +1058,54 @@ const [
     currentUser,
   ]);
 
+  const deleteComment =
+  useCallback(async (commentId) => {
+    try {
+      await deletePost(commentId);
+
+      setSelectedPost((previousPost) =>
+        previousPost
+          ? {
+              ...previousPost,
+              comments: (
+                previousPost.comments ?? []
+              ).filter(
+                (comment) =>
+                  comment.id !== commentId,
+              ),
+              replyCount: Math.max(
+                0,
+                (previousPost.replyCount ?? 0) - 1,
+              ),
+            }
+          : previousPost,
+      );
+
+      setTweets((previousTweets) =>
+        previousTweets.map((tweet) => ({
+          ...tweet,
+          comments: (
+            tweet.comments ?? []
+          ).filter(
+            (comment) =>
+              comment.id !== commentId,
+          ),
+        })),
+      );
+    } catch (error) {
+      notificationEmitter.emit(
+        "comment-error",
+        {
+          type: "error",
+          message:
+            error instanceof Error
+              ? error.message
+              : "Comment could not be deleted.",
+        },
+      );
+    }
+  }, []);
+
   /* =====================================
      Like / Unlike
      ===================================== */
@@ -1231,52 +1289,69 @@ const toggleLike =
        Undo Repost
        --------------------------------- */
 
-    if (repostedPosts[postId]) {
-      setTweets((previousTweets) =>
-        previousTweets.filter(
-          (tweet) =>
-            !(
-              tweet instanceof Retweet &&
-              tweet.originalPost?.postId ===
-                postId
-            )
-        )
-      );
-
-      setRepostedPosts(
-        (previousPosts) => ({
-          ...previousPosts,
-          [postId]: false,
-        })
-      );
-
-      notificationEmitter.emit(
-        "unrepost",
-        {
-          type: "unrepost",
-          message: `You removed your repost of ${post.author}'s post.`,
-        }
-      );
-
-      return;
-    }
-
-    try {
-      await createPost({
-        authorId: currentUserId,
-        kind: "repost",
-        repostOfId: postId,
-      });
-    } catch (error) {
-      notificationEmitter.emit("repost-error", {
+   if (repostedPosts[postId]) {
+  try {
+    await undoRepost(postId);
+  } catch (error) {
+    notificationEmitter.emit(
+      "repost-error",
+      {
         type: "error",
         message:
           error instanceof Error
             ? error.message
-            : "Repost could not be created.",
-      });
-      return;
-    }
+            : "Repost could not be removed.",
+      },
+    );
+
+    return;
+  }
+
+  setTweets((previousTweets) =>
+    previousTweets.filter(
+      (tweet) =>
+        !(
+          tweet instanceof Retweet &&
+          tweet.originalPost?.postId === postId
+        ),
+    ),
+  );
+
+ setRepostedPosts((previousPosts) => ({
+  ...previousPosts,
+  [postId]: false,
+}));
+
+  notificationEmitter.emit(
+    "unrepost",
+    {
+      type: "unrepost",
+      message: `You removed your repost of ${post.author}'s post.`,
+    },
+  );
+
+  return;
+}
+
+    let createdRepost;
+
+try {
+  createdRepost = await createPost({
+    authorId: currentUserId,
+    kind: "repost",
+    repostOfId: postId,
+  });
+} catch (error) {
+  notificationEmitter.emit("repost-error", {
+    type: "error",
+    message:
+      error instanceof Error
+        ? error.message
+        : "Repost could not be created.",
+  });
+
+  return;
+}
 
     /* ---------------------------------
        Find Original Tweet
@@ -1331,11 +1406,11 @@ const toggleLike =
        --------------------------------- */
 
     setRepostedPosts(
-      (previousPosts) => ({
-        ...previousPosts,
-        [postId]: true,
-      })
-    );
+  (previousPosts) => ({
+    ...previousPosts,
+    [postId]: true,
+  })
+);
 
     /* ---------------------------------
        Notification
@@ -1654,6 +1729,67 @@ const fetchNextApiPage =
     selectedPostData?.comments ??
     selectedTweet?.comments ??
     [];
+    const handleDeletePost =
+  useCallback(async () => {
+    if (!selectedPost) {
+      return;
+    }
+
+    const postId =
+      selectedPost.id;
+
+    const confirmed =
+      window.confirm(
+        "Delete this post?",
+      );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      await deletePost(postId);
+
+      // Remove it from the feed.
+      setApiPosts((previousPosts) =>
+        previousPosts.filter(
+          (post) => post.id !== postId,
+        ),
+      );
+
+      // Remove it from profile posts if present.
+      setProfilePosts((previousPosts) =>
+        previousPosts.filter(
+          (post) => post.id !== postId,
+        ),
+      );
+
+      // Close the modal.
+      setSelectedPost(null);
+
+      notificationEmitter.emit(
+        "post-deleted",
+        {
+          type: "post-deleted",
+          message: "Post deleted.",
+        },
+      );
+    } catch (error) {
+      notificationEmitter.emit(
+        "error",
+        {
+          type: "error",
+          message:
+            error?.message ??
+            "Could not delete post.",
+        },
+      );
+    }
+  }, [
+    selectedPost,
+    setApiPosts,
+    setProfilePosts,
+  ]);
 
   /* =====================================
      Render
@@ -1832,6 +1968,8 @@ const fetchNextApiPage =
           onRepost={
             repostPost
           }
+          onDelete={handleDeletePost}
+          onDeleteComment={deleteComment}
         />
       )}
     </>

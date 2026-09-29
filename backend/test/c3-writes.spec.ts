@@ -129,6 +129,8 @@ describe(
 
         const result =
           await service.createPost({
+            authorId:
+              DEMO_USER_ID,
             kind: 'original',
             text:
               '  Hello  ',
@@ -156,26 +158,65 @@ describe(
     );
 
     // ==========================================================
-    // CALLER CANNOT CHOOSE AUTHOR
+    // CALLER-SUPPLIED AUTHOR
     // ==========================================================
 
     it(
-      'rejects caller-selected authorId',
+      'accepts a valid authorId',
       async () => {
         const {
           service,
+          repository,
         } =
           createService();
+
+        repository.createPost.mockResolvedValue({
+          id: ORIGINAL_ID,
+          authorId: DEMO_USER_ID,
+          kind: 'original',
+          text: 'Hello',
+          replyToId: null,
+          repostOfId: null,
+          createdAt: new Date(),
+        });
+
+        repository.getPostDetail.mockResolvedValue({
+          id: ORIGINAL_ID,
+          authorId: DEMO_USER_ID,
+          kind: 'original',
+          text: 'Hello',
+          replyToId: null,
+          repostOfId: null,
+          createdAt: new Date(),
+          author: {
+            id: DEMO_USER_ID,
+            handle: 'demo',
+            displayName: 'Demo',
+            bio: null,
+            avatarSmallUrl: null,
+            avatarLargeUrl: null,
+          },
+          media: null,
+          likeCount: 0,
+          replyCount: 0,
+          repostCount: 0,
+          likedByViewer: false,
+          referencedPost: null,
+        });
 
         await expect(
           service.createPost({
             kind: 'original',
             text: 'Hello',
             authorId:
-              'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+              DEMO_USER_ID,
           }),
-        ).rejects.toBeInstanceOf(
-          UnprocessableEntityException,
+        ).resolves.toBeDefined();
+
+        expect(repository.createPost).toHaveBeenCalledWith(
+          expect.objectContaining({
+            authorId: DEMO_USER_ID,
+          }),
         );
       },
     );
@@ -194,6 +235,8 @@ describe(
 
         await expect(
           service.createPost({
+            authorId:
+              DEMO_USER_ID,
             kind: 'original',
             text: 'Hello',
             id: ORIGINAL_ID,
@@ -223,6 +266,8 @@ describe(
 
         await expect(
           service.createPost({
+            authorId:
+              DEMO_USER_ID,
             kind: 'reply',
             text: 'Reply',
             replyToId:
@@ -264,6 +309,8 @@ describe(
 
         await expect(
           service.createPost({
+            authorId:
+              DEMO_USER_ID,
             kind: 'reply',
             text: 'Nested reply',
             replyToId:
@@ -305,6 +352,8 @@ describe(
 
         await expect(
           service.createPost({
+            authorId:
+              DEMO_USER_ID,
             kind: 'repost',
             repostOfId:
               REPLY_ID,

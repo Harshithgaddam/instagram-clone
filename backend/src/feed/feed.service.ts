@@ -140,6 +140,12 @@ export class FeedService {
         demoUserId,
       );
 
+    const viewerRepostId =
+      await this.postRepository.findViewerRepostId(
+        post.id,
+        demoUserId,
+      );
+
     return {
       id: post.id,
       kind: post.kind,
@@ -174,6 +180,8 @@ export class FeedService {
       likeCount,
       replyCount,
       likedByViewer,
+      repostedByViewer:
+        viewerRepostId !== null,
 
       replyToId:
         post.replyToId ?? null,

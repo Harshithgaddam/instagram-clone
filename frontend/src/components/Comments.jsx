@@ -4,26 +4,40 @@ function Comments({
   commentText,
   setCommentText,
   onAddComment,
+  onDeleteComment,
 }) {
   return (
     <div className="comments-section"> 
       <h3>Comments</h3>
 
       <div className="comment-list">
-        {comments?.map((comment) => (
-          <div
-            className="comment"
-            key={comment.id}
-          >
-            <strong>
-              {comment.author}
-            </strong>
+        
+            {comments?.map((comment) => (
+  <div
+    className="comment"
+    key={comment.id}
+  >
+    <strong>
+      {comment.author}
+    </strong>
 
-            <span>
-              {comment.content}
-            </span>
-          </div>
-        ))}
+    <span>
+      {comment.content}
+    </span>
+
+    {comment.author === "Rahul" && (
+      <button
+        type="button"
+        onClick={() =>
+          onDeleteComment(comment.id)
+        }
+      >
+        Delete
+      </button>
+    )}
+  </div>
+))}
+         
       </div>
 
       <div className="comment-input">

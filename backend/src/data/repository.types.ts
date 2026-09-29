@@ -41,6 +41,7 @@ export interface FeedPostResult {
   repostCount: number;
 
   likedByViewer: boolean;
+  repostedByViewer: boolean;
 }
 
 export interface FeedPageResult {

@@ -7,6 +7,7 @@ describe('PostsService', () => {
 
   const postRepository = {
     findById: jest.fn(),
+    getPostDetail: jest.fn(),
     findMediaByPostId: jest.fn(),
     countLikes: jest.fn(),
     countReplies: jest.fn(),
@@ -19,6 +20,7 @@ describe('PostsService', () => {
 
   const configService = {
     get: jest.fn(),
+    getOrThrow: jest.fn(),
   };
 
   beforeEach(() => {
@@ -27,10 +29,12 @@ describe('PostsService', () => {
     configService.get.mockReturnValue(
       'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
     );
+    configService.getOrThrow.mockReturnValue(
+      'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+    );
 
     service = new PostsService(
       postRepository as any,
-      userRepository as any,
       configService as any,
     );
   });
@@ -49,6 +53,29 @@ describe('PostsService', () => {
     postRepository.findById.mockResolvedValue(
       post,
     );
+
+    postRepository.getPostDetail.mockResolvedValue({
+      id: post.id,
+      kind: post.kind,
+      text: post.text,
+      createdAt: new Date(post.createdAt),
+      author: {
+        id: post.authorId,
+        handle: 'asha',
+        displayName: 'Asha',
+        bio: 'Hello',
+        avatarSmallUrl: '/fixtures/asha-48.jpg',
+        avatarLargeUrl: '/fixtures/asha-96.jpg',
+      },
+      media: null,
+      likeCount: 2,
+      replyCount: 1,
+      repostCount: 0,
+      likedByViewer: true,
+      replyToId: null,
+      repostOfId: null,
+      referencedPost: null,
+    });
 
     userRepository.findById.mockResolvedValue({
       id: post.authorId,
@@ -85,10 +112,9 @@ describe('PostsService', () => {
         id: post.authorId,
         handle: 'asha',
         displayName: 'Asha',
-        avatar: {
-          smallUrl: '/fixtures/asha-48.jpg',
-          largeUrl: '/fixtures/asha-96.jpg',
-        },
+        bio: 'Hello',
+        avatarSmallUrl: '/fixtures/asha-48.jpg',
+        avatarLargeUrl: '/fixtures/asha-96.jpg',
       },
       media: [],
       likeCount: 2,
@@ -101,6 +127,10 @@ describe('PostsService', () => {
 
   it('should throw NotFoundException for a missing post', async () => {
     postRepository.findById.mockResolvedValue(
+      null,
+    );
+
+    postRepository.getPostDetail.mockResolvedValue(
       null,
     );
 
