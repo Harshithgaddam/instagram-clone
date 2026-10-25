@@ -62,9 +62,9 @@ export class PostsService {
 
   async getPost(
     id: string,
+    viewerId: string,
   ): Promise<PostDetailResponseDto> {
-    const viewerId =
-      this.getDemoUserId();
+    
 
     const result =
       await this.postRepository.getPostDetail(
@@ -93,9 +93,9 @@ export class PostsService {
 
   async getReplies(
     postId: string,
+    viewerId: string,
   ): Promise<FeedResponseDto> {
-    const viewerId =
-      this.getDemoUserId();
+    
 
     const result =
       await this.postRepository.listDirectReplies(
@@ -125,12 +125,13 @@ export class PostsService {
 
   async  createPost(
     body: unknown,
+    userId: string,
   ): Promise<PostDetailResponseDto> {
     const dto =
       this.validateCreatePostBody(body);
 
-    const authorId =
-      dto.authorId;
+    const authorId =userId;
+      
 
     /*
      * Domain validation happens here, before the repository
@@ -240,9 +241,9 @@ export class PostsService {
 
   async likePost(
     postId: string,
+    viewerId: string,
   ) {
-    const viewerId =
-      this.getDemoUserId();
+    
 
     await this.validateLikeTarget(
       postId,
@@ -265,9 +266,9 @@ export class PostsService {
 
   async unlikePost(
     postId: string,
+    viewerId: string,
   ) {
-    const viewerId =
-      this.getDemoUserId();
+    
 
     await this.validateLikeTarget(
       postId,
@@ -409,7 +410,6 @@ export class PostsService {
         );
 
       return {
-        authorId: value.authorId,
         kind,
         text,
       };
@@ -455,7 +455,6 @@ export class PostsService {
         );
 
       return {
-        authorId: value.authorId,
         kind,
         text,
         replyToId:
@@ -497,7 +496,6 @@ export class PostsService {
     }
 
     return {
-      authorId: value.authorId,
       kind,
       repostOfId:
         value.repostOfId,
@@ -551,11 +549,11 @@ export class PostsService {
   // DEMO USER
   // ============================================================
 
-  private getDemoUserId(): string {
-    return this.configService.getOrThrow<string>(
-      'demoUserId',
-    );
-  }
+  // private getDemoUserId(): string {
+  //   return this.configService.getOrThrow<string>(
+  //     'demoUserId',
+  //   );
+  // }
 
   // ============================================================
   // API MAPPING
@@ -662,10 +660,12 @@ export class PostsService {
 
 async deletePost(
   postId: string,
+  viewerId: string,
 ): Promise<{ id: string }> {
   try {
     await this.postRepository.deletePost(
       postId,
+      viewerId,
     );
 
     return {
@@ -678,9 +678,9 @@ async deletePost(
 
 async undoRepost(
   originalPostId: string,
+  viewerId: string,
 ): Promise<{ id: string }> {
-  const viewerId =
-    this.getDemoUserId();
+  
 
   const repostId =
     await this.postRepository.findViewerRepostId(
@@ -696,6 +696,7 @@ async undoRepost(
 
   await this.postRepository.deletePost(
     repostId,
+    viewerId
   );
 
   return {

@@ -62,6 +62,7 @@ describe('FeedService', () => {
         userId: string,
       ) => Promise<boolean>
     >(),
+    findViewerRepostId: jest.fn(),
   };
 
   const fakeUserRepository = {
@@ -137,6 +138,8 @@ describe('FeedService', () => {
           'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
 
         text: 'Test post',
+        replyToId: null,
+        repostOfId: null,
 
         createdAt:
           new Date('2026-09-01T10:00:00.000Z'),
@@ -151,11 +154,9 @@ describe('FeedService', () => {
         displayName: 'Asha',
 
         bio: 'Test bio',
-
-        avatar: {
-          smallUrl: '/small.jpg',
-          largeUrl: '/large.jpg',
-        },
+          avatarSmallUrl: '/small.jpg',
+          avatarLargeUrl: '/large.jpg',
+        
       });
 
       fakePostRepository.findMediaByPostId
@@ -171,10 +172,13 @@ describe('FeedService', () => {
         .mockResolvedValue(false);
 
       const result =
-        await service.getPosts({
-          kind: 'original',
-          limit: 10,
-        });
+        await service.getPosts(
+          'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+          {
+            kind: 'original',
+            limit: 10,
+          },
+        );
 
       expect(result.items).toHaveLength(1);
 

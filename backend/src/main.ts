@@ -1,40 +1,39 @@
 import { NestFactory } from '@nestjs/core';
-
 import { ConfigService } from '@nestjs/config';
-
+import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
-
-import {
-  HttpExceptionFilter,
-} from './common/http-exception.filter';
+import { HttpExceptionFilter } from './common/http-exception.filter';
 
 async function bootstrap() {
-  const app =
-    await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule);
 
-  const configService =
-    app.get(ConfigService);
+  const configService = app.get(ConfigService);
 
-    const frontendOrigin =
-  configService.get<string>(
-    'frontendOrigin',
-  );
+  const frontendOrigin =
+    configService.getOrThrow<string>('frontendOrigin');
 
-app.enableCors({
-  origin: frontendOrigin,
-});
+  app.enableCors({
+    origin: frontendOrigin,
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'X-Request-Id'],
+  });
 
-  app.useGlobalFilters(
-    new HttpExceptionFilter(),
-  );
+  app.useGlobalPipes(
+  new ValidationPipe({
+    transform: true,
+    whitelist: true,
+    forbidNonWhitelisted: true,
+  }),
+);
 
-  const port =
-    configService.get<number>('port') ?? 3000;
+  app.useGlobalFilters(new HttpExceptionFilter());
 
-    app.enableShutdownHooks();
-    
+  const port = configService.get<number>('port') ?? 3000;
+
+  app.enableShutdownHooks();
+
   await app.listen(port);
-  
 }
 
 bootstrap();

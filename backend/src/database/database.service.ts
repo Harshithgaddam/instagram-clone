@@ -13,7 +13,7 @@ import { Post } from './entities/post.entity';
 import { PostMedia } from './entities/post-media.entity';
 import { Like } from './entities/like.entity';
 import { Follow } from './entities/follow.entity';
-
+import { Session } from './entities/session.entity';
 @Injectable()
 export class DatabaseService
   extends DataSource
@@ -44,6 +44,7 @@ export class DatabaseService
         PostMedia,
         Like,
         Follow,
+        Session,
       ],
     });
   }

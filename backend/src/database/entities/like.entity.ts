@@ -1,6 +1,7 @@
 import {
   Column,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   PrimaryColumn,
@@ -9,9 +10,8 @@ import {
 import type { User } from './user.entity';
 import type { Post } from './post.entity';
 
-@Entity({
-  name: 'likes',
-})
+@Entity({ name: 'likes' })
+@Index('idx_likes_post_id', ['postId'])
 export class Like {
   @PrimaryColumn({
     name: 'user_id',
@@ -34,16 +34,17 @@ export class Like {
   createdAt: Date;
 
   @ManyToOne(
-  'User',
-  (user: User) => user.likes,
-  {
-    onDelete: 'CASCADE',
-  },
-)
-@JoinColumn({
-  name: 'user_id',
-})
-user: User;
+    'User',
+    (user: User) => user.likes,
+    {
+      onDelete: 'CASCADE',
+    },
+  )
+  @JoinColumn({
+    name: 'user_id',
+    foreignKeyConstraintName: 'likes_user_id_fkey',
+  })
+  user: User;
 
   @ManyToOne(
     'Post',
@@ -54,6 +55,7 @@ user: User;
   )
   @JoinColumn({
     name: 'post_id',
+    foreignKeyConstraintName: 'likes_post_id_fkey',
   })
   post: Post;
 }

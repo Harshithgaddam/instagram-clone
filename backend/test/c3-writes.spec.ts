@@ -1,6 +1,5 @@
 import { jest } from '@jest/globals';
 import {
-  ConflictException,
   NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
@@ -11,15 +10,14 @@ import {
   PostsService,
 } from '../src/posts/posts.service';
 
-import {
-  RepositoryError,
-} from '../src/data/repository.types';
-
 describe(
   'C3 PostsService writes',
   () => {
     const DEMO_USER_ID =
       'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+
+    const BODY_AUTHOR_ID =
+      'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
 
     const ORIGINAL_ID =
       '11111111-1111-4111-8111-111111111111';
@@ -46,11 +44,7 @@ describe(
         ...overrides,
       };
 
-      const config =
-        new ConfigService({
-          demoUserId:
-            DEMO_USER_ID,
-        });
+      const config = new ConfigService();
 
       const service =
         new PostsService(
@@ -69,7 +63,7 @@ describe(
     // ==========================================================
 
     it(
-      'creates an original using DEMO_USER_ID',
+      'uses the authenticated user instead of body authorId',
       async () => {
         const {
           service,
@@ -130,11 +124,11 @@ describe(
         const result =
           await service.createPost({
             authorId:
-              DEMO_USER_ID,
+              BODY_AUTHOR_ID,
             kind: 'original',
             text:
               '  Hello  ',
-          });
+          }, DEMO_USER_ID);
 
         expect(
           repository.createPost,
@@ -210,7 +204,7 @@ describe(
             text: 'Hello',
             authorId:
               DEMO_USER_ID,
-          }),
+          }, DEMO_USER_ID),
         ).resolves.toBeDefined();
 
         expect(repository.createPost).toHaveBeenCalledWith(
@@ -240,7 +234,7 @@ describe(
             kind: 'original',
             text: 'Hello',
             id: ORIGINAL_ID,
-          }),
+          }, DEMO_USER_ID),
         ).rejects.toBeInstanceOf(
           UnprocessableEntityException,
         );
@@ -272,7 +266,7 @@ describe(
             text: 'Reply',
             replyToId:
               ORIGINAL_ID,
-          }),
+          }, DEMO_USER_ID),
         ).rejects.toBeInstanceOf(
           NotFoundException,
         );
@@ -315,7 +309,7 @@ describe(
             text: 'Nested reply',
             replyToId:
               REPLY_ID,
-          }),
+          }, DEMO_USER_ID),
         ).rejects.toBeInstanceOf(
           UnprocessableEntityException,
         );
@@ -357,7 +351,7 @@ describe(
             kind: 'repost',
             repostOfId:
               REPLY_ID,
-          }),
+          }, DEMO_USER_ID),
         ).rejects.toBeInstanceOf(
           UnprocessableEntityException,
         );
@@ -404,6 +398,7 @@ describe(
         const result =
           await service.likePost(
             ORIGINAL_ID,
+            DEMO_USER_ID,
           );
 
         expect(
@@ -451,6 +446,7 @@ describe(
         await expect(
           service.likePost(
             REPLY_ID,
+            DEMO_USER_ID,
           ),
         ).rejects.toBeInstanceOf(
           UnprocessableEntityException,
@@ -482,6 +478,7 @@ describe(
         await expect(
           service.likePost(
             ORIGINAL_ID,
+            DEMO_USER_ID,
           ),
         ).rejects.toBeInstanceOf(
           NotFoundException,
@@ -529,6 +526,7 @@ describe(
         const result =
           await service.unlikePost(
             ORIGINAL_ID,
+            DEMO_USER_ID,
           );
 
         expect(

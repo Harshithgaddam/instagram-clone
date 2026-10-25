@@ -13,7 +13,13 @@ export class HttpExceptionFilter
   catch(
     exception: unknown,
     host: ArgumentsHost,
-  ) {
+  ) {  
+  if (!(exception instanceof HttpException)) {
+    console.error(
+      'Unhandled request exception:',
+      exception,
+    );
+  }
     const ctx =
       host.switchToHttp();
 
@@ -129,6 +135,9 @@ export class HttpExceptionFilter
       case HttpStatus.SERVICE_UNAVAILABLE:
         return 'SERVICE_UNAVAILABLE';
 
+      case HttpStatus.UNAUTHORIZED:
+         return 'UNAUTHORIZED';
+         
       default:
         return 'INTERNAL_ERROR';
     }

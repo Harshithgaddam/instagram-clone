@@ -2,6 +2,12 @@ import { PostsController } from './posts.controller';
 import { jest } from '@jest/globals';
 describe('PostsController', () => {
   let controller: PostsController;
+  const user = {
+    userId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+    sessionId: 'session-id',
+    handle: 'test_user',
+    displayName: 'Test User',
+  };
 
   const postsService = {
     getPost: jest.fn(),
@@ -30,10 +36,11 @@ describe('PostsController', () => {
     );
 
     const result =
-      await controller.getPost(id);
+      await controller.getPost(id, user);
 
     expect(postsService.getPost).toHaveBeenCalledWith(
       id,
+      user.userId,
     );
 
     expect(result).toEqual(expected);
@@ -41,7 +48,7 @@ describe('PostsController', () => {
 
   it('should reject an invalid UUID', async () => {
     await expect(
-      controller.getPost('hello'),
+      controller.getPost('hello', user),
     ).rejects.toThrow();
 
     expect(

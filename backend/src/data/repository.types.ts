@@ -114,7 +114,9 @@ export type RepositoryErrorCode =
   | 'CONFLICT'
   | 'REFERENCE_NOT_FOUND'
   | 'INVALID_TARGET'
-  | 'INTERNAL';
+  | 'INTERNAL'
+  | 'UNAUTHORIZED'
+  | 'FORBIDDEN';
 
 export class RepositoryError extends Error {
   constructor(

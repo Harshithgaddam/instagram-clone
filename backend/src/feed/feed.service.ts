@@ -43,7 +43,9 @@ export class FeedService {
   ) {}
 
  async getPosts(
+  viewerId: string,
   options?: FindPostsOptions,
+  
 ): Promise<FeedResponseDto> {
   const limit = options?.limit ?? 10;
 
@@ -56,10 +58,7 @@ export class FeedService {
         }
       : null;
 
-  const viewerId =
-    this.configService.getOrThrow<string>(
-      'demoUserId',
-    );
+  
 
   const result =
     await this.postRepository.listOriginalFeed(
@@ -70,7 +69,7 @@ export class FeedService {
 
   const items = await Promise.all(
     result.items.map((post) =>
-      this.mapPost(post.id),
+      this.mapPost(post.id,viewerId),
     ),
   );
 
@@ -90,6 +89,7 @@ export class FeedService {
 
   private async mapPost(
     postId: string,
+     viewerId: string
   ): Promise<FeedPostResponseDto> {
     const post =
       await this.postRepository.findById(
@@ -129,21 +129,19 @@ export class FeedService {
       ),
     ]);
 
-    const demoUserId =
-      this.configService.get<string>(
-        'demoUserId',
-      ) ?? '';
+    
+      
 
     const likedByViewer =
       await this.postRepository.isLikedByUser(
         post.id,
-        demoUserId,
+        viewerId,
       );
 
     const viewerRepostId =
       await this.postRepository.findViewerRepostId(
         post.id,
-        demoUserId,
+       viewerId,
       );
 
     return {

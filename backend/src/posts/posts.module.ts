@@ -6,9 +6,9 @@ import { PostsController } from './posts.controller';
 import { PostsService } from './posts.service';
 
 import { DataModule } from '../data/data.module';
-
+import { AuthModule } from '../auth/auth.module';
 @Module({
-  imports: [DataModule],
+  imports: [DataModule,AuthModule],
 
   controllers: [
     PostsController,
