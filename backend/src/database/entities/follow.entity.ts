@@ -2,6 +2,7 @@ import {
   Check,
   Column,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   PrimaryColumn,
@@ -9,13 +10,12 @@ import {
 
 import type { User } from './user.entity';
 
-@Entity({
-  name: 'follows',
-})
+@Entity({ name: 'follows' })
 @Check(
   'chk_follows_no_self_follow',
   '"follower_id" <> "following_id"',
 )
+@Index('idx_follows_following_id', ['followingId'])
 export class Follow {
   @PrimaryColumn({
     name: 'follower_id',
@@ -38,26 +38,28 @@ export class Follow {
   createdAt: Date;
 
   @ManyToOne(
-  'User',
-  (user: User) => user.followers,
-  {
-    onDelete: 'CASCADE',
-  },
-)
-@JoinColumn({
-  name: 'follower_id',
-})
-follower: User;
+    'User',
+    (user: User) => user.followers,
+    {
+      onDelete: 'CASCADE',
+    },
+  )
+  @JoinColumn({
+    name: 'follower_id',
+    foreignKeyConstraintName: 'follows_follower_id_fkey',
+  })
+  follower: User;
 
-@ManyToOne(
-  'User',
-  (user: User) => user.following,
-  {
-    onDelete: 'CASCADE',
-  },
-)
-@JoinColumn({
-  name: 'following_id',
-})
-following: User;
+  @ManyToOne(
+    'User',
+    (user: User) => user.following,
+    {
+      onDelete: 'CASCADE',
+    },
+  )
+  @JoinColumn({
+    name: 'following_id',
+    foreignKeyConstraintName: 'follows_following_id_fkey',
+  })
+  following: User;
 }

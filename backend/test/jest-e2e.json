@@ -2,15 +2,14 @@
   "moduleFileExtensions": ["js", "json", "ts"],
   "rootDir": ".",
   "testEnvironment": "node",
+  "testTimeout": 30000,
   "extensionsToTreatAsEsm": [".ts"],
   "testRegex": ".e2e-spec.ts$",
-  "transform": {
-    "^.+\\.ts$": [
+  "transform": { "^.+\\.ts$": [
       "ts-jest",
       {
         "tsconfig": "./tsconfig.spec.json",
         "useESM": true
       }
-    ]
-  }
+    ] }
 }

@@ -18,7 +18,13 @@ import {
   validateUuid,
 } from '../common/validation';
 
+import { UseGuards } from '@nestjs/common';
+import { AuthGuard } from '../auth/auth.guard';
+import { CurrentUser } from '../auth/current-user.decorator';
+import type { AuthenticatedUser } from '../auth/current-user.decorator';
+
 @Controller('posts')
+@UseGuards(AuthGuard)
 export class PostsController {
   constructor(
     private readonly postsService: PostsService,
@@ -31,11 +37,12 @@ export class PostsController {
   @Get(':id')
   async getPost(
     @Param('id') id: string,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
     validateUuid(id, 'id');
 
     return this.postsService.getPost(
-      id,
+      id,user.userId,
     );
   }
 
@@ -46,19 +53,22 @@ export class PostsController {
   @Get(':id/replies')
   async getReplies(
     @Param('id') id: string,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
     validateUuid(id, 'id');
 
-    return this.postsService.getReplies(id);
+    return this.postsService.getReplies(id,user.userId,);
   }
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
   async createPost(
     @Body() body: unknown,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.postsService.createPost(
       body,
+      user.userId,
     );
   }
 
@@ -70,11 +80,12 @@ export class PostsController {
   @HttpCode(HttpStatus.OK)
   async likePost(
     @Param('id') id: string,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
     validateUuid(id, 'id');
 
     return this.postsService.likePost(
-      id,
+      id,user.userId,
     );
   }
 
@@ -86,11 +97,12 @@ export class PostsController {
   @HttpCode(HttpStatus.OK)
   async unlikePost(
     @Param('id') id: string,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
     validateUuid(id, 'id');
 
     return this.postsService.unlikePost(
-      id,
+      id,user.userId,
     );
   }
   // ============================================================
@@ -101,19 +113,21 @@ export class PostsController {
 @HttpCode(HttpStatus.OK)
 async deletePost(
   @Param('id') id: string,
+  @CurrentUser() user: AuthenticatedUser,
 ) {
   validateUuid(id, 'id');
 
-  return this.postsService.deletePost(id);
+  return this.postsService.deletePost(id,user.userId);
 }
 
 @Delete(':id/repost')
 @HttpCode(HttpStatus.OK)
 async undoRepost(
   @Param('id') id: string,
+  @CurrentUser() user: AuthenticatedUser,
 ) {
   validateUuid(id, 'id');
 
-  return this.postsService.undoRepost(id);
+  return this.postsService.undoRepost(id, user.userId);
 }
 }

@@ -2,8 +2,9 @@ import {
   MiddlewareConsumer,
   Module,
   NestModule,
+  RequestMethod,
 } from '@nestjs/common';
-
+import { rateLimit } from 'express-rate-limit';
 import {
   ConfigModule,
 } from '@nestjs/config';
@@ -25,6 +26,34 @@ import {
   RequestLoggingMiddleware,
 } from './common/request-logging.middleware';
 
+import { AuthModule } from './auth/auth.module';
+const loginRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  limit: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    error: {
+      code: 'RATE_LIMITED',
+      message: 'Too many login attempts. Try again later.',
+      details: [],
+    },
+  },
+});
+
+const registerRateLimit = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  limit: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    error: {
+      code: 'RATE_LIMITED',
+      message: 'Too many registration attempts. Try again later.',
+      details: [],
+    },
+  },
+});
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -38,6 +67,7 @@ import {
     FeedModule,
     DataModule,
     SearchModule,
+    AuthModule,
   ],
 })
 export class AppModule
@@ -52,5 +82,18 @@ export class AppModule
         RequestLoggingMiddleware,
       )
       .forRoutes('*');
+      consumer
+  .apply(loginRateLimit)
+  .forRoutes({
+    path: 'auth/login',
+    method: RequestMethod.POST,
+  });
+
+consumer
+  .apply(registerRateLimit)
+  .forRoutes({
+    path: 'auth/register',
+    method: RequestMethod.POST,
+  });
   }
 }

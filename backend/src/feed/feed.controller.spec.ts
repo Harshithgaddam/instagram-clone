@@ -5,12 +5,19 @@ import { FeedResponseDto } from './feed-response.dto';
 
 describe('FeedController', () => {
   let controller: FeedController;
+  const user = {
+    userId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+    sessionId: 'session-id',
+    handle: 'test_user',
+    displayName: 'Test User',
+  };
 
   const feedService = {
     getPosts: jest.fn<
       () => Promise<FeedResponseDto>
     >(),
   };
+  
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -27,38 +34,38 @@ describe('FeedController', () => {
   });
 
   it('should use the default limit of 10', async () => {
-    await controller.getFeed({});
+    await controller.getFeed({}, user);
 
     expect(
       feedService.getPosts,
-    ).toHaveBeenCalledWith({
-      kind: 'original',
-      limit: 10,
-      cursorCreatedAt: undefined,
-      cursorId: undefined,
-    });
+    ).toHaveBeenCalledWith(user.userId, {
+        kind: 'original',
+        limit: 10,
+        cursorCreatedAt: undefined,
+        cursorId: undefined,
+      });
   });
 
   it('should accept a valid limit', async () => {
     await controller.getFeed({
       limit: '5',
-    });
+    }, user);
 
     expect(
       feedService.getPosts,
-    ).toHaveBeenCalledWith({
-      kind: 'original',
-      limit: 5,
-      cursorCreatedAt: undefined,
-      cursorId: undefined,
-    });
+    ).toHaveBeenCalledWith(user.userId, {
+        kind: 'original',
+        limit: 5,
+        cursorCreatedAt: undefined,
+        cursorId: undefined,
+      });
   });
 
   it('should reject limit 0', async () => {
     await expect(
       controller.getFeed({
         limit: '0',
-      }),
+      },user),
     ).rejects.toThrow();
   });
 
@@ -66,7 +73,7 @@ describe('FeedController', () => {
     await expect(
       controller.getFeed({
         limit: '51',
-      }),
+      },user),
     ).rejects.toThrow();
   });
 
@@ -74,7 +81,7 @@ describe('FeedController', () => {
     await expect(
       controller.getFeed({
         page: '1',
-      }),
+      },user),
     ).rejects.toThrow();
   });
 
@@ -82,7 +89,7 @@ describe('FeedController', () => {
     await expect(
       controller.getFeed({
         limit: ['5', '10'],
-      }),
+      },user),
     ).rejects.toThrow();
   });
 
@@ -90,7 +97,7 @@ describe('FeedController', () => {
     await expect(
       controller.getFeed({
         foo: 'bar',
-      }),
+      },user),
     ).rejects.toThrow();
   });
 });

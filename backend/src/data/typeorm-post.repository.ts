@@ -1490,8 +1490,29 @@ async setLike(
 }
 async deletePost(
   postId: string,
+  viewerId:string,
 ): Promise<void> {
   try {
+
+    const post = await this.posts.findOne({
+      where: { id: postId },
+    });
+
+    if (!post) {
+      throw new RepositoryError(
+        'NOT_FOUND',
+        'Post not found',
+      );
+    }
+
+    // 2. Check if the logged-in user is the actual author of the post
+    if (post.authorId !== viewerId) {
+      throw new RepositoryError(
+        'FORBIDDEN',
+        'You are not authorized to delete this post',
+      );
+    }
+    
     const result =
       await this.posts.delete({
         id: postId,

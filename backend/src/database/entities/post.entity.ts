@@ -1,6 +1,8 @@
 import {
+  Check,
   Column,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   OneToMany,
@@ -18,12 +20,69 @@ export enum PostKind {
   REPOST = 'repost',
 }
 
-@Entity({
-  name: 'posts',
-})
+@Entity({ name: 'posts' })
+@Check(
+  'chk_posts_kind',
+  `"kind" IN ('original', 'reply', 'repost')`,
+)
+@Check(
+  'chk_posts_kind_shape',
+  `(
+    (
+      "kind" = 'original'
+      AND "reply_to_id" IS NULL
+      AND "repost_of_id" IS NULL
+      AND "text" IS NOT NULL
+      AND "text" = btrim("text")
+      AND char_length("text") BETWEEN 1 AND 280
+    )
+    OR
+    (
+      "kind" = 'reply'
+      AND "reply_to_id" IS NOT NULL
+      AND "repost_of_id" IS NULL
+      AND "text" IS NOT NULL
+      AND "text" = btrim("text")
+      AND char_length("text") BETWEEN 1 AND 280
+    )
+    OR
+    (
+      "kind" = 'repost'
+      AND "repost_of_id" IS NOT NULL
+      AND "reply_to_id" IS NULL
+      AND "text" IS NULL
+    )
+  )`,
+)
+@Index(
+  'uq_posts_one_repost_per_user',
+  ['authorId', 'repostOfId'],
+  { unique: true, where: `"kind" = 'repost'` },
+)
+@Index(
+  'idx_posts_feed_order',
+  ['createdAt', 'id'],
+  {
+    where: `"kind" = 'original'`,
+  },
+)
+@Index(
+  'idx_posts_reply_lookup',
+  ['replyToId', 'createdAt', 'id'],
+  {
+    where: `"kind" = 'reply'`,
+  },
+)
+@Index(
+  'idx_posts_author_order',
+  ['authorId', 'createdAt', 'id'],
+  {
+    where: `"kind" = 'original'`,
+  },
+)
 export class Post {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+ @PrimaryGeneratedColumn('uuid')
+id: string;
 
   @Column({
     name: 'author_id',
@@ -32,16 +91,17 @@ export class Post {
   authorId: string;
 
   @ManyToOne(
-  'User',
-  (user: User) => user.posts,
-  {
-    onDelete: 'RESTRICT',
-  },
-)
-@JoinColumn({
-  name: 'author_id',
-})
-author: User;
+    'User',
+    (user: User) => user.posts,
+    {
+      onDelete: 'RESTRICT',
+    },
+  )
+  @JoinColumn({
+    name: 'author_id',
+    foreignKeyConstraintName: 'posts_author_id_fkey',
+  })
+  author: User;
 
   @Column({
     type: 'text',
@@ -64,6 +124,7 @@ author: User;
   )
   @JoinColumn({
     name: 'reply_to_id',
+    foreignKeyConstraintName: 'posts_reply_to_id_fkey',
   })
   replyTo: Post | null;
 
@@ -83,6 +144,7 @@ author: User;
   )
   @JoinColumn({
     name: 'repost_of_id',
+    foreignKeyConstraintName: 'posts_repost_of_id_fkey',
   })
   repostOf: Post | null;
 
@@ -100,15 +162,9 @@ author: User;
   })
   createdAt: Date;
 
-  @OneToOne(
-    () => PostMedia,
-    (media) => media.post,
-  )
+  @OneToOne(() => PostMedia, (media) => media.post)
   media: PostMedia | null;
 
-  @OneToMany(
-    () => Like,
-    (like) => like.post,
-  )
+  @OneToMany(() => Like, (like) => like.post)
   likes: Like[];
 }

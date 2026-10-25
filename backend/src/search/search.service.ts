@@ -3,7 +3,7 @@ import {
   Inject,
   Injectable,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+
 
 import { POST_REPOSITORY } from '../data/data.tokens';
 import type { PostRepository } from '../data/post.repository';
@@ -25,15 +25,14 @@ export class SearchService {
   constructor(
     @Inject(POST_REPOSITORY)
     private readonly postRepository: PostRepository,
-
-    private readonly configService: ConfigService,
   ) {}
 
   async search({
     query,
     cursor,
     limit,
-  }: SearchOptions): Promise<FeedPageResult> {
+  }: SearchOptions,
+ viewerId: string ): Promise<FeedPageResult> {
     const trimmedQuery = query.trim();
 
     if (!trimmedQuery) {
@@ -60,8 +59,7 @@ export class SearchService {
       });
     }
 
-    const viewerId =
-      this.configService.getOrThrow<string>('demoUserId');
+   
 
     try {
       return await this.postRepository.searchOriginals(

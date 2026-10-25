@@ -1,7 +1,4 @@
-import { users } from '../data/fixtures';
 
-const UUID_REGEX =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export default () => {
   const port = Number(
@@ -12,8 +9,7 @@ export default () => {
     process.env.FRONTEND_ORIGIN ??
     'http://localhost:5173';
 
-  const demoUserId =
-    process.env.DEMO_USER_ID ?? '';
+ 
 
   const simulatedIoMs = Number(
     process.env.SIMULATED_IO_MS ?? 0,
@@ -60,25 +56,13 @@ export default () => {
     );
   }
 
-  // --------------------------------------------------
-  // DEMO_USER_ID
-  // --------------------------------------------------
+ 
 
-  if (!UUID_REGEX.test(demoUserId)) {
-    throw new Error(
-      'DEMO_USER_ID must be a valid UUID',
-    );
-  }
+  
 
-  const demoUserExists = users.some(
-    (user) => user.id === demoUserId,
-  );
+  
 
-  if (!demoUserExists) {
-    throw new Error(
-      'DEMO_USER_ID must match a seeded user',
-    );
-  }
+ 
 
   // --------------------------------------------------
   // SIMULATED_IO_MS
@@ -146,7 +130,6 @@ export default () => {
   return {
     port,
     frontendOrigin,
-    demoUserId,
     simulatedIoMs,
     databaseUrl,
     databaseConnectTimeoutMs,

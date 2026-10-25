@@ -10,7 +10,13 @@ import { validateCursor } from '../common/validation';
 import { decodeCursor } from '../common/cursor';
 import type { FeedCursor } from '../data/repository.types';
 
+import { UseGuards } from '@nestjs/common';
+import { AuthGuard } from '../auth/auth.guard';
+import { CurrentUser } from '../auth/current-user.decorator';
+import type { AuthenticatedUser } from '../auth/current-user.decorator';
+
 @Controller('search')
+@UseGuards(AuthGuard)
 export class SearchController {
   constructor(
     private readonly searchService: SearchService,
@@ -19,8 +25,10 @@ export class SearchController {
   @Get()
   async search(
     @Query('q') query: string,
+    @CurrentUser() user: AuthenticatedUser,
     @Query('cursor') cursor?: string,
     @Query('limit') limit?: string,
+    
   ) {
     if (!query?.trim()) {
       throw new BadRequestException(
@@ -73,10 +81,13 @@ export class SearchController {
       });
     }
 
-    return this.searchService.search({
+    return this.searchService.search(
+      {
       query: query.trim(),
       cursor: decodedCursor,
       limit: parsedLimit,
-    });
+    },
+     user.userId
+    );
   }
 }

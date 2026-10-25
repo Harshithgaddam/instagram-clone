@@ -18,8 +18,13 @@ import {
   validateCursor,
   validateLimit,
 } from '../common/validation';
+import { UseGuards } from '@nestjs/common';
+import { AuthGuard } from '../auth/auth.guard';
+import { CurrentUser } from '../auth/current-user.decorator';
+import type { AuthenticatedUser } from '../auth/current-user.decorator';
 
 @Controller('feed')
+@UseGuards(AuthGuard)
 export class FeedController {
   constructor(
     private readonly feedService: FeedService,
@@ -32,6 +37,7 @@ async getFeed(
     string,
     string | string[] | undefined
   >,
+  @CurrentUser() user: AuthenticatedUser,
 ) {
   const safeQuery = query ?? {};
 
@@ -106,13 +112,13 @@ async getFeed(
       }
     }
 
-    return this.feedService.getPosts({
+    return this.feedService.getPosts(user.userId,{
   kind: 'original',
   limit: parsedLimit,
   cursorCreatedAt: decodedCursor?.createdAt
     ? new Date(decodedCursor.createdAt)
     : undefined,
   cursorId: decodedCursor?.id,
-});
+},);
   }
 }

@@ -228,6 +228,7 @@ export interface PostRepository {
 
   deletePost(
     postId: string,
+    vierwerId:string,
   ): Promise<void>;
 
   findViewerRepostId(
