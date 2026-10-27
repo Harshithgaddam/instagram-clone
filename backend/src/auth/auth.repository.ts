@@ -47,4 +47,6 @@ export interface AuthRepository {
   ): Promise<boolean>;
   revokeSession(id: string): Promise<void>;
   revokeAllSessions(userId: string): Promise<void>;
+  deactivateAccount(userId: string): Promise<boolean>;
+  reactivateAccount(userId: string): Promise<void>;
 }

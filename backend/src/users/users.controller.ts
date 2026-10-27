@@ -4,12 +4,19 @@ import {
   Controller,
   Get,
   Param,
-  Query
+  Query,
+  Patch,
+  UseGuards,
+  Body,
+  Post,
 } from '@nestjs/common';
 
 import { UsersService } from './users.service';
-
+import { UpdateProfileDto } from './dto/update.profile.dto';
+import{CurrentUser} from '../auth/current-user.decorator';
+import type {AuthenticatedUser} from '../auth/current-user.decorator';
 import { validateUuid } from '../common/validation';
+import {AuthGuard} from '../auth/auth.guard';
 
 import {
   rejectRepeatedQueryParameter,
@@ -88,4 +95,24 @@ export class UsersController {
       limit,
     );
   }
+  @Patch('me')
+  @UseGuards(AuthGuard)
+  async updateMyProfile(
+    @CurrentUser() actor: AuthenticatedUser,
+    @Body() dto: UpdateProfileDto,
+  ) {
+    return this.usersService.updateProfile(
+      actor.userId,
+      dto,
+    );
+  }
+  @Post('deactivate')
+@UseGuards(AuthGuard)
+async deactivateAccount(
+  @CurrentUser() actor: AuthenticatedUser,
+) {
+  return this.usersService.deactivateAccount(
+    actor.userId,
+  );
+}
 }

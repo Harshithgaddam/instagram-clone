@@ -72,9 +72,13 @@ const passwordMatches = await argon2.verify(
 );
        
 
-    if (!account || !passwordMatches || account.disabledAt) {
+    if (!account || !passwordMatches ) {
       throw new UnauthorizedException('Invalid credentials');
     }
+
+      if (account.disabledAt) {
+    await this.repository.reactivateAccount(account.id);
+     }
 
     const token = randomBytes(32).toString('base64url');
     const tokenHash = this.hashToken(token);

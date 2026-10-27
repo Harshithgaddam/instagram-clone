@@ -1,34 +1,6 @@
 // // // src/data/user.repository.ts
-
-// // export interface User {
-// //   id: string;
-// //   handle: string;
-// //   displayName: string;
-// //   bio: string;
-// //   avatar: {
-// //     smallUrl: string;
-// //     largeUrl: string;
-// //   };
-// // }
-
-// // export interface UserRepository {
-// //   findById(id: string): Promise<User | null>;
-
-// //   countOriginalPosts(userId: string): Promise<number>;
-
-// //   countFollowers(userId: string): Promise<number>;
-
-// //   countFollowing(userId: string): Promise<number>;
-// // }
-
-// import { ProfileResult } from './repository.types';
-
-// export interface UserRepository {
-//   getProfile(
-//     userId: string,
-//   ): Promise<ProfileResult | null>;
-// }
 import { ProfileResult } from './repository.types';
+import {UpdatedProfileResult} from '../users/users.service';
 export interface User {
   id: string;
   handle: string;
@@ -61,4 +33,24 @@ export interface UserRepository {
   getProfile(
     userId: string,
   ): Promise<ProfileResult | null>;
+  
+  updateProfile(
+  userId: string,
+  changes: ProfileUpdateChanges,
+  expectedVersion:number,
+): Promise<UpdatedProfileResult>;
+}
+export interface ProfileUpdateChanges {
+  displayName?: string;
+  bio?: string | null;
+}
+
+export interface UpdatedProfile {
+  id: string;
+  handle: string;
+  displayName: string;
+  bio: string | null;
+  avatarSmallUrl: string | null;
+  avatarLargeUrl: string | null;
+  version: number;
 }

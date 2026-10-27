@@ -88,6 +88,12 @@ id: string;
   })
   disabledAt: Date | null;
 
+  @Column({
+  type: 'integer',
+  default: 1,
+  })
+  version: number;
+
   @OneToMany(() => Post, (post) => post.author)
   posts: Post[];
 
