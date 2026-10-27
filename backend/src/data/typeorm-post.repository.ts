@@ -268,6 +268,11 @@ export class TypeOrmPostRepository
       const qb =
         this.posts
           .createQueryBuilder('post')
+          .innerJoin(
+        'post.author',
+        'author',
+        'author.disabledAt IS NULL',
+      )
           .where(
             'post.kind = :kind',
             {
@@ -311,12 +316,15 @@ export class TypeOrmPostRepository
     viewerId: string,
   ): Promise<PostDetailResult | null> {
     try {
-      const post =
-        await this.posts.findOne({
-          where: {
-            id: postId,
-          },
-        });
+       const post = await this.posts
+      .createQueryBuilder('post')
+      .innerJoin(
+        'post.author',
+        'author',
+        'author.disabledAt IS NULL',
+      )
+      .where('post.id = :postId', { postId })
+      .getOne();
 
       if (!post) {
         return null;
@@ -576,6 +584,11 @@ export class TypeOrmPostRepository
       const qb =
         this.posts
           .createQueryBuilder('post')
+           .innerJoin(
+          'post.author',
+          'author',
+           'author.disabledAt IS NULL',
+               )
           .where(
             'post.kind = :kind',
             {

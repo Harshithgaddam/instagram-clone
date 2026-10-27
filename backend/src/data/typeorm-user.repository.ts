@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Repository } from 'typeorm';
+import { Repository ,IsNull} from 'typeorm';
 
 import { DatabaseService } from '../database/database.service';
 import {
@@ -16,15 +16,17 @@ import {
 import type {
   User,
   UserRepository,
+  ProfileUpdateChanges,
+  UpdatedProfile,
 } from './user.repository';
-
+import type { UpdatedProfileResult } from '../users/users.service';
 @Injectable()
 export class TypeOrmUserRepository
   implements UserRepository
 {
   private readonly users: Repository<UserEntity>;
   private readonly posts: Repository<Post>;
-
+ 
   constructor(
     private readonly database: DatabaseService,
   ) {
@@ -45,7 +47,8 @@ export class TypeOrmUserRepository
     try {
       const user =
         await this.users.findOne({
-          where: { id },
+          where: { id,
+            disabledAt: IsNull(), },
         });
 
       if (!user) {
@@ -149,6 +152,7 @@ export class TypeOrmUserRepository
         await this.users.findOne({
           where: {
             id: userId,
+            disabledAt: IsNull(),
           },
         });
 
@@ -214,4 +218,61 @@ export class TypeOrmUserRepository
       'Internal database error',
     );
   }
+
+  async updateProfile(
+  userId: string,
+  changes: ProfileUpdateChanges,
+  expectedVersion: number,
+): Promise<UpdatedProfileResult> {
+  const result = await this.users
+    .createQueryBuilder()
+    .update(UserEntity)
+    .set({
+      ...changes,
+      version: () => '"version" + 1',
+    })
+    .where('"id" = :userId', { userId })
+    .andWhere('"version" = :expectedVersion', {
+      expectedVersion,
+    })
+    .andWhere('"disabled_at" IS NULL')
+    .returning([
+      'id',
+      'handle',
+      'display_name',
+      'bio',
+      'avatar_small_url',
+      'avatar_large_url',
+      'version',
+    ])
+    .execute();
+
+  if (result.affected === 1 && result.raw[0]) {
+    const row = result.raw[0];
+
+    return {
+      status: 'updated',
+      user: {
+        id: row.id,
+        handle: row.handle,
+        displayName: row.display_name,
+        bio: row.bio,
+        avatarSmallUrl: row.avatar_small_url,
+        avatarLargeUrl: row.avatar_large_url,
+        version: row.version,
+      },
+    };
+  }
+
+  const exists = await this.users.findOne({
+    where: { id: userId },
+    select: { id: true, disabledAt: true },
+  });
+
+  if (!exists || exists.disabledAt !== null) {
+    return { status: 'not-found' };
+  }
+
+  return { status: 'conflict' };
+}
 }

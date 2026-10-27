@@ -167,4 +167,45 @@ export class TypeOrmAuthRepository implements AuthRepository {
       .andWhere('revoked_at IS NULL')
       .execute();
   }
+  async deactivateAccount(userId: string): Promise<boolean> {
+  return this.database.transaction(async (manager) => {
+    const result = await manager
+      .createQueryBuilder()
+      .update(User)
+      .set({
+        disabledAt: () => 'CURRENT_TIMESTAMP',
+      })
+      .where('id = :userId', { userId })
+      .andWhere('"disabled_at" IS NULL')
+      .execute();
+
+    if (result.affected !== 1) {
+      return false;
+    }
+
+    await manager
+      .createQueryBuilder()
+      .update(Session)
+      .set({
+        revokedAt: () => 'CURRENT_TIMESTAMP',
+      })
+      .where('"user_id" = :userId', { userId })
+      .andWhere('"revoked_at" IS NULL')
+      .execute();
+
+    return true;
+  });
+}
+
+async reactivateAccount(userId: string): Promise<void> {
+  await this.database
+    .createQueryBuilder()
+    .update(User)
+    .set({
+      disabledAt: () => 'NULL',
+    })
+    .where('id = :userId', { userId })
+    .andWhere('"disabled_at" IS NOT NULL')
+    .execute();
+}
 }
