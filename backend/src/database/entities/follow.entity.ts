@@ -10,10 +10,21 @@ import {
 
 import type { User } from './user.entity';
 
+export enum FollowStatus {
+  PENDING = 'pending',
+  ACCEPTED = 'accepted',
+  REJECTED = 'rejected',
+  CANCELLED = 'cancelled',
+}
+
 @Entity({ name: 'follows' })
 @Check(
   'chk_follows_no_self_follow',
   '"follower_id" <> "following_id"',
+)
+@Check(
+  'chk_follows_status',
+  `"status" IN ('pending', 'accepted', 'rejected', 'cancelled')`,
 )
 @Index('idx_follows_following_id', ['followingId'])
 export class Follow {
@@ -36,6 +47,11 @@ export class Follow {
     default: () => 'now()',
   })
   createdAt: Date;
+@Column({
+  type: 'text',
+  default: FollowStatus.ACCEPTED,
+})
+status: FollowStatus;
 
   @ManyToOne(
     'User',

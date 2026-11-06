@@ -9,6 +9,8 @@ import {
   UseGuards,
   Body,
   Post,
+  Delete,
+  BadRequestException,
 } from '@nestjs/common';
 
 import { UsersService } from './users.service';
@@ -113,6 +115,166 @@ async deactivateAccount(
 ) {
   return this.usersService.deactivateAccount(
     actor.userId,
+  );
+}
+
+@Post(':id/follow')
+@UseGuards(AuthGuard)
+async followUser(
+  @Param('id') id: string,
+  @CurrentUser() actor: AuthenticatedUser,
+) {
+  validateUuid(id, 'id');
+
+  return this.usersService.followUser(
+    actor.userId,
+    id,
+  );
+}
+
+@Delete(':id/follow')
+@UseGuards(AuthGuard)
+async unfollowUser(
+  @Param('id') id: string,
+  @CurrentUser() actor: AuthenticatedUser,
+) {
+  validateUuid(id, 'id');
+
+  return this.usersService.unfollowUser(
+    actor.userId,
+    id,
+  );
+}
+
+@Get(':id/followers')
+async getFollowers(
+  @Param('id') id: string,
+  @Query()
+  query: Record<string, string | string[] | undefined>,
+  @CurrentUser() actor?: AuthenticatedUser,
+) {
+  validateUuid(id, 'id');
+
+  const safeQuery = query ?? {};
+
+  rejectUnknownQueryParameters(safeQuery, [
+    'cursor',
+    'limit',
+  ]);
+
+  const singleCursor = rejectRepeatedQueryParameter(
+    safeQuery.cursor,
+    'cursor',
+  );
+
+  const singleLimit = rejectRepeatedQueryParameter(
+    safeQuery.limit,
+    'limit',
+  );
+
+  const limit = validateLimit(singleLimit);
+  const cursor = validateCursor(singleCursor);
+
+  let decodedCursor: ReturnType<typeof decodeCursor> | null = null;
+
+  if (cursor !== undefined) {
+    try {
+      decodedCursor = decodeCursor(cursor);
+    } catch {
+      throw new BadRequestException('Invalid cursor');
+    }
+  }
+
+  return this.usersService.getFollowers(
+    id,
+    actor?.userId ?? null,
+    decodedCursor
+      ? {
+          createdAt: new Date(decodedCursor.createdAt),
+          id: decodedCursor.id,
+        }
+      : null,
+    limit,
+  );
+}
+
+@Get(':id/following')
+async getFollowing(
+  @Param('id') id: string,
+  @Query()
+  query: Record<string, string | string[] | undefined>,
+  @CurrentUser() actor?: AuthenticatedUser,
+) {
+  validateUuid(id, 'id');
+
+  const safeQuery = query ?? {};
+
+  rejectUnknownQueryParameters(safeQuery, [
+    'cursor',
+    'limit',
+  ]);
+
+  const singleCursor = rejectRepeatedQueryParameter(
+    safeQuery.cursor,
+    'cursor',
+  );
+
+  const singleLimit = rejectRepeatedQueryParameter(
+    safeQuery.limit,
+    'limit',
+  );
+
+  const limit = validateLimit(singleLimit);
+  const cursor = validateCursor(singleCursor);
+
+  let decodedCursor: ReturnType<typeof decodeCursor> | null = null;
+
+  if (cursor !== undefined) {
+    try {
+      decodedCursor = decodeCursor(cursor);
+    } catch {
+      throw new BadRequestException('Invalid cursor');
+    }
+  }
+
+  return this.usersService.getFollowing(
+    id,
+    actor?.userId ?? null,
+    decodedCursor
+      ? {
+          createdAt: new Date(decodedCursor.createdAt),
+          id: decodedCursor.id,
+        }
+      : null,
+    limit,
+  );
+}
+
+@Post('me/follow-requests/:requesterId/approve')
+@UseGuards(AuthGuard)
+async approveFollowRequest(
+  @Param('requesterId') requesterId: string,
+  @CurrentUser() actor: AuthenticatedUser,
+) {
+  validateUuid(requesterId, 'requesterId');
+
+  return this.usersService.approveFollowRequest(
+    actor.userId,
+    requesterId,
+  );
+}
+
+@Post('me/follow-requests/:requesterId/reject')
+@UseGuards(AuthGuard)
+async rejectFollowRequest(
+  @Param('requesterId') requesterId: string,
+  @CurrentUser() actor: AuthenticatedUser,
+) {
+  validateUuid(requesterId, 'requesterId');
+
+  return this.usersService.rejectFollowRequest(
+    actor.userId,
+    requesterId,
   );
 }
 }

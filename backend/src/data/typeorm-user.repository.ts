@@ -63,6 +63,7 @@ export class TypeOrmUserRepository
       bio: user.bio,
       avatarSmallUrl: user.avatarSmallUrl,
       avatarLargeUrl: user.avatarLargeUrl,
+      isPrivate: user.isPrivate,
     };
     } catch (error) {
       this.handleDatabaseError(error);
@@ -92,28 +93,25 @@ export class TypeOrmUserRepository
   // EXISTING METHOD: COUNT FOLLOWERS
   // =========================================================
 
-  async countFollowers(
-    userId: string,
-  ): Promise<number> {
-    try {
-      const result =
-        await this.users.query(
-          `
-          SELECT COUNT(*)::text AS count
-          FROM follows
-          WHERE following_id = $1
-          `,
-          [userId],
-        );
+ async countFollowers(
+  userId: string,
+): Promise<number> {
+  try {
+    const result = await this.users.query(
+      `
+      SELECT COUNT(*)::text AS count
+      FROM follows
+      WHERE following_id = $1
+        AND status = 'accepted'
+      `,
+      [userId],
+    );
 
-      return Number(
-        result[0]?.count ?? 0,
-      );
-    } catch (error) {
-      this.handleDatabaseError(error);
-    }
+    return Number(result[0]?.count ?? 0);
+  } catch (error) {
+    this.handleDatabaseError(error);
   }
-
+}
   // =========================================================
   // EXISTING METHOD: COUNT FOLLOWING
   // =========================================================
@@ -128,6 +126,7 @@ export class TypeOrmUserRepository
           SELECT COUNT(*)::text AS count
           FROM follows
           WHERE follower_id = $1
+            AND status = 'accepted'
           `,
           [userId],
         );

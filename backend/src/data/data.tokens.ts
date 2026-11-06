@@ -1,3 +1,4 @@
 export const POST_REPOSITORY = Symbol('POST_REPOSITORY');
 export const USER_REPOSITORY =Symbol('USER_REPOSITORY');
 export const AUTH_REPOSITORY = Symbol('AUTH_REPOSITORY');
+export const FOLLOW_REPOSITORY = Symbol('FOLLOW_REPOSITORY');
