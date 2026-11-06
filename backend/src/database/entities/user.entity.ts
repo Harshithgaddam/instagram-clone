@@ -94,6 +94,13 @@ id: string;
   })
   version: number;
 
+    @Column({
+    name: 'is_private',
+    type: 'boolean',
+    default: false,
+  })
+  isPrivate: boolean;
+
   @OneToMany(() => Post, (post) => post.author)
   posts: Post[];
 
