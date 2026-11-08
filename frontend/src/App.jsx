@@ -1,5 +1,11 @@
 import {useCallback,useEffect,useRef,useState} from "react";
 import "./App.css";
+import AuthPage from "./components/AuthPage";
+import {
+  login,
+  logout,
+  register,
+} from "./api/authApi";
 
 /* =====================================
    Models
@@ -28,6 +34,12 @@ import {
   fetchPostDetail,
   fetchPostReplies,
   fetchUserProfile,
+  fetchUserPosts,
+  fetchUserFollowers,
+  fetchUserFollowing,
+  updateUserProfile,
+  followUser,
+  unfollowUser,
   fetchProfileMediaPage,
   searchPosts,
   likePost,
@@ -69,21 +81,155 @@ import InfiniteFeed from "./components/InfiniteFeed";
 import CreatePostModal from "./components/CreatePostModal";
 import PostModal from "./components/PostModal";
 import NotificationToast from "./components/NotificationToast";
+import ProfileModal from "./components/ProfileModal";
 
 /* =====================================
    Constants
    ===================================== */
 
-const CURRENT_USER = "Harshith";
-const demoUserId =
-  import.meta.env.VITE_DEMO_USER_ID;
-const currentUserId = demoUserId;
 /* =====================================
    App
    ===================================== */
 
-function App() {
-  const currentUser = CURRENT_USER;
+function AuthenticatedApp({ account, onLogout }) {
+  const currentUser = account.displayName;
+  const currentUserId = account.id;
+  const [profile, setProfile] = useState(null);
+  const [profileUserId, setProfileUserId] = useState(null);
+  const [profileIsOwn, setProfileIsOwn] = useState(false);
+  const [userProfileLoading, setUserProfileLoading] = useState(false);
+  const [profileError, setProfileError] = useState("");
+  const [relationshipType, setRelationshipType] = useState(null);
+  const [relationshipItems, setRelationshipItems] = useState([]);
+  const [relationshipLoading, setRelationshipLoading] = useState(false);
+  const [relationshipError, setRelationshipError] = useState("");
+  const [userPosts, setUserPosts] = useState([]);
+  const [userReposts, setUserReposts] = useState([]);
+  const [userPostsLoading, setUserPostsLoading] = useState(false);
+  const [userPostsError, setUserPostsError] = useState("");
+
+  const openProfile = useCallback(async () => {
+    setProfileUserId(currentUserId);
+    setProfileIsOwn(true);
+    setRelationshipType(null);
+    setUserProfileLoading(true);
+    setUserPostsError("");
+    setProfileError("");
+
+    try {
+      setUserPostsLoading(true);
+      const [response, postsResponse, repostsResponse] =
+        await Promise.all([
+          fetchUserProfile(currentUserId),
+          fetchUserPosts(currentUserId, "original"),
+          fetchUserPosts(currentUserId, "repost"),
+        ]);
+      setProfile(response.item);
+      setUserPosts(
+        (postsResponse.items ?? []).map(convertApiPostToFeedPost),
+      );
+      setUserReposts(
+        (repostsResponse.items ?? []).map(convertApiPostToFeedPost),
+      );
+    } catch (error) {
+      setUserPostsError(
+        error instanceof Error
+          ? error.message
+          : "Unable to load profile posts.",
+      );
+      setProfileError(
+        error instanceof Error
+          ? error.message
+          : "Unable to load your profile.",
+      );
+    } finally {
+      setUserProfileLoading(false);
+      setUserPostsLoading(false);
+    }
+  }, [currentUserId]);
+
+  const openUserProfile = useCallback(async (userId) => {
+    if (!userId) return;
+
+    setSelectedPost(null);
+    setProfile(null);
+    setRelationshipType(null);
+    setProfileUserId(userId);
+    setProfileIsOwn(userId === currentUserId);
+    setUserProfileLoading(true);
+    setUserPostsLoading(true);
+    setProfileError("");
+    setUserPostsError("");
+
+    try {
+      const response = await fetchUserProfile(userId);
+      setProfile(response.item);
+
+      const canViewContent =
+        !response.item.isPrivate ||
+        response.item.relationshipStatus === "accepted" ||
+        response.item.id === currentUserId;
+
+      if (canViewContent) {
+        const [postsResponse, repostsResponse] =
+          await Promise.all([
+            fetchUserPosts(userId, "original"),
+            fetchUserPosts(userId, "repost"),
+          ]);
+        setUserPosts(
+          (postsResponse.items ?? []).map(convertApiPostToFeedPost),
+        );
+        setUserReposts(
+          (repostsResponse.items ?? []).map(convertApiPostToFeedPost),
+        );
+      } else {
+        setUserPosts([]);
+        setUserReposts([]);
+      }
+    } catch (error) {
+      setProfileError(
+        error instanceof Error
+          ? error.message
+          : "Unable to load profile.",
+      );
+    } finally {
+      setUserProfileLoading(false);
+      setUserPostsLoading(false);
+    }
+  }, [currentUserId]);
+
+  const openRelationshipList = useCallback(async (type) => {
+    setRelationshipType(type);
+    setRelationshipItems([]);
+    setRelationshipLoading(true);
+    setRelationshipError("");
+
+    try {
+      const fetchList =
+        type === "followers"
+          ? fetchUserFollowers
+          : fetchUserFollowing;
+      const response = await fetchList(profileUserId);
+      setRelationshipItems(response.items ?? []);
+    } catch (error) {
+      setRelationshipError(
+        error instanceof Error
+          ? error.message
+          : "Unable to load this list.",
+      );
+    } finally {
+      setRelationshipLoading(false);
+    }
+  }, [profileUserId]);
+
+  const saveUserProfile = useCallback(async (changes) => {
+    const response = await updateUserProfile(changes);
+    setProfile((previous) => ({
+      ...previous,
+      ...response.item,
+    }));
+    return response;
+  }, []);
 
   /* =====================================
      Following Users
@@ -134,37 +280,60 @@ const searchLoadedIdsRef =
      ===================================== */
 
   const toggleFollow = useCallback(
-    (username) => {
-      if (!username || username === currentUser) {
+    async (post) => {
+      const username = post?.author;
+      const targetId = post?.authorId;
+
+      if (!username || !targetId || username === currentUser) {
         return;
       }
 
-      setFollowingUsers((previousFollowing) => {
-        const nextFollowing = new Set(previousFollowing);
+      const wasFollowing = followingUsers.has(username);
 
-        const wasFollowing =
-          nextFollowing.has(username);
-
+      try {
         if (wasFollowing) {
-          nextFollowing.delete(username);
-
-          notificationEmitter.emit("unfollow", {
-            type: "unfollow",
-            message: `You unfollowed ${username}.`,
-          });
+          await unfollowUser(targetId);
         } else {
-          nextFollowing.add(username);
-
-          notificationEmitter.emit("new-follower", {
-            type: "new-follower",
-            message: `You are now following ${username}.`,
-          });
+          await followUser(targetId);
         }
 
-        return nextFollowing;
-      });
+        setFollowingUsers((previousFollowing) => {
+          const nextFollowing = new Set(previousFollowing);
+
+          if (wasFollowing) {
+            nextFollowing.delete(username);
+          } else {
+            nextFollowing.add(username);
+          }
+
+          return nextFollowing;
+        });
+
+        if (profile) {
+          const response = await fetchUserProfile(profileUserId);
+          setProfile(response.item);
+        }
+
+        notificationEmitter.emit(
+          wasFollowing ? "unfollow" : "new-follower",
+          {
+            type: wasFollowing ? "unfollow" : "new-follower",
+            message: wasFollowing
+              ? `You unfollowed ${username}.`
+              : `You are now following ${username}.`,
+          },
+        );
+      } catch (error) {
+        notificationEmitter.emit("error", {
+          type: "error",
+          message:
+            error instanceof Error
+              ? error.message
+              : "Unable to update follow status.",
+        });
+      }
     },
-    [currentUser]
+    [currentUser, currentUserId, followingUsers, profile]
   );
   /* =====================================
       Profile  State
@@ -672,7 +841,7 @@ const [
       try {
         const data =
           await fetchProfileMediaPage({
-            userId: demoUserId,
+            userId: currentUserId,
             cursor:
               reset
                 ? null
@@ -732,7 +901,7 @@ const [
       }
     },
     [
-      demoUserId,
+      currentUserId,
       profileLoading,
       profileHasMore,
       profileNextCursor,
@@ -814,6 +983,7 @@ const [
     newPostImage,
     setNewPostImage,
   ] = useState("");
+  const [newPostFile, setNewPostFile] = useState(null);
 
   const [
     newPostTitle,
@@ -855,6 +1025,8 @@ const [
         return;
       }
 
+      setNewPostFile(file);
+
       const reader = new FileReader();
 
       reader.onload = () => {
@@ -876,7 +1048,7 @@ const [
      Create Tweet / Post
      ===================================== */
 
-  const createTweet = useCallback(() => {
+  const createTweet = useCallback(async () => {
     const title = newPostTitle.trim();
     const alt = newPostAlt.trim();
     const description = newPostText.trim();
@@ -903,6 +1075,23 @@ const [
     if (tags.length === 0) {
       alert(
         "Please add at least one tag."
+      );
+      return;
+    }
+
+    try {
+      await createPost({
+        authorId: currentUserId,
+        kind: "original",
+        text: description,
+        image: newPostFile,
+        altText: alt,
+      });
+    } catch (error) {
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Could not create post.",
       );
       return;
     }
@@ -943,6 +1132,7 @@ const [
     ]);
 
     setNewPostImage("");
+    setNewPostFile(null);
     setNewPostTitle("");
     setNewPostAlt("");
     setNewPostText("");
@@ -955,6 +1145,8 @@ const [
     newPostText,
     newPostTags,
     currentUser,
+    currentUserId,
+    newPostFile,
   ]);
 
   /* =====================================
@@ -1799,7 +1991,30 @@ const fetchNextApiPage =
     <>
       <main className="container">
 
-        <h1>Instagram</h1>
+        <div className="app-header">
+          <h1>Instagram</h1>
+          <div className="app-header-actions">
+            <button
+              type="button"
+              className="profile-button"
+              onClick={openProfile}
+              aria-label="View profile"
+              title="View profile"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <circle cx="12" cy="8" r="3.5" />
+                <path d="M4.5 20c.7-3.4 3.4-5.3 7.5-5.3s6.8 1.9 7.5 5.3" />
+              </svg>
+            </button>
+            <button type="button" onClick={onLogout}>
+              Log out
+            </button>
+          </div>
+        </div>
 
         {/* =================================
             Search
@@ -1862,6 +2077,71 @@ const fetchNextApiPage =
           notificationQueue
         }
       />
+
+      {profile && (
+        <ProfileModal
+          key={profile.id}
+          profile={profile}
+          loading={userProfileLoading}
+          error={profileError}
+          relationshipType={relationshipType}
+          relationshipItems={relationshipItems}
+          relationshipLoading={relationshipLoading}
+          relationshipError={relationshipError}
+          onRelationshipClick={openRelationshipList}
+          onBack={() => setRelationshipType(null)}
+          onUpdateProfile={saveUserProfile}
+          profileIsOwn={profileIsOwn}
+          canViewPrivateContent={
+            !profile.isPrivate ||
+            profile.relationshipStatus === "accepted" ||
+            profileIsOwn
+          }
+          posts={userPosts}
+          reposts={userReposts}
+          postsLoading={userPostsLoading}
+          postsError={userPostsError}
+          onPostClick={openPost}
+          onClose={() => {
+            setProfile(null);
+            setProfileError("");
+            setRelationshipType(null);
+          }}
+        />
+      )}
+
+      {!profile && (userProfileLoading || profileError) && (
+        <ProfileModal
+          profile={null}
+          loading={userProfileLoading}
+          error={profileError}
+          relationshipType={relationshipType}
+          relationshipItems={relationshipItems}
+          relationshipLoading={relationshipLoading}
+          relationshipError={relationshipError}
+          onRelationshipClick={openRelationshipList}
+          onBack={() => setRelationshipType(null)}
+          onUpdateProfile={saveUserProfile}
+          profileIsOwn={profileIsOwn}
+          canViewPrivateContent={
+            profile
+              ? !profile.isPrivate ||
+                profile.relationshipStatus === "accepted" ||
+                profileIsOwn
+              : false
+          }
+          posts={userPosts}
+          reposts={userReposts}
+          postsLoading={userPostsLoading}
+          postsError={userPostsError}
+          onPostClick={openPost}
+          onClose={() => {
+            setUserProfileLoading(false);
+            setProfileError("");
+            setRelationshipType(null);
+          }}
+        />
+      )}
 
       {/* =====================================
           Create Post Modal
@@ -1970,9 +2250,71 @@ const fetchNextApiPage =
           }
           onDelete={handleDeletePost}
           onDeleteComment={deleteComment}
+          onOpenUserProfile={openUserProfile}
         />
       )}
     </>
+  );
+}
+
+function App() {
+  const [account, setAccount] = useState(null);
+  const [authLoading, setAuthLoading] = useState(false);
+  const [authError, setAuthError] = useState("");
+
+  const authenticate = async (action) => {
+    setAuthLoading(true);
+    setAuthError("");
+
+    try {
+      const response = await action();
+      setAccount(response.item);
+      return response;
+    } catch (error) {
+      setAuthError(
+        error instanceof Error
+          ? error.message
+          : "Authentication failed.",
+      );
+      return null;
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  if (authLoading && !account) {
+    return <main className="auth-loading">Loading...</main>;
+  }
+
+  if (!account) {
+    return (
+      <AuthPage
+        loading={authLoading}
+        error={authError}
+        onLogin={(credentials) =>
+          authenticate(() => login(credentials))
+        }
+        onRegister={async (credentials) => {
+          const registration = await authenticate(() =>
+            register(credentials),
+          );
+
+          if (registration) {
+            await authenticate(() => login(credentials));
+          }
+        }}
+      />
+    );
+  }
+
+  return (
+    <AuthenticatedApp
+      account={account}
+      onLogout={async () => {
+        await logout();
+        setAccount(null);
+      }}
+    />
   );
 }
 

@@ -63,6 +63,7 @@ export class TypeOrmUserRepository
       bio: user.bio,
       avatarSmallUrl: user.avatarSmallUrl,
       avatarLargeUrl: user.avatarLargeUrl,
+      version: user.version,
       isPrivate: user.isPrivate,
     };
     } catch (error) {

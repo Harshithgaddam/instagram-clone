@@ -37,12 +37,14 @@ export class UsersController {
   ) {}
 
   @Get(':id')
+  @UseGuards(AuthGuard)
   async getUser(
     @Param('id') id: string,
+    @CurrentUser() actor: AuthenticatedUser,
   ) {
     validateUuid(id, 'id');
 
-    return this.usersService.getUser(id);
+    return this.usersService.getUser(id, actor.userId);
   }
   @Get(':id/media')
   async getUserMedia(
@@ -93,10 +95,65 @@ export class UsersController {
             ),
             id: decodedCursor.id,
           }
+
         : null,
       limit,
     );
   }
+
+  @Get(':id/posts')
+  @UseGuards(AuthGuard)
+  async getUserPosts(
+    @Param('id') id: string,
+    @Query()
+    query: Record<string, string | string[] | undefined>,
+    @CurrentUser() actor: AuthenticatedUser,
+  ) {
+    validateUuid(id, 'id');
+    const safeQuery = query ?? {};
+    rejectUnknownQueryParameters(safeQuery, [
+      'cursor',
+      'limit',
+      'kind',
+    ]);
+
+    const kind = rejectRepeatedQueryParameter(safeQuery.kind, 'kind');
+    if (kind !== 'original' && kind !== 'repost') {
+      throw new BadRequestException('kind must be original or repost');
+    }
+
+    const cursorValue = rejectRepeatedQueryParameter(
+      safeQuery.cursor,
+      'cursor',
+    );
+    const limit = validateLimit(
+      rejectRepeatedQueryParameter(safeQuery.limit, 'limit'),
+    );
+    const validatedCursor = validateCursor(cursorValue);
+    let cursor: ReturnType<typeof decodeCursor> | null = null;
+
+    if (validatedCursor !== undefined) {
+      try {
+        cursor = decodeCursor(validatedCursor);
+      } catch {
+        throw new BadRequestException('Invalid cursor');
+      }
+    }
+
+    return this.usersService.getUserPosts(
+      id,
+      kind,
+      cursor
+        ? {
+            createdAt: new Date(cursor.createdAt),
+            id: cursor.id,
+          }
+        : null,
+      limit,
+      actor.userId,
+    );
+  }
+
   @Patch('me')
   @UseGuards(AuthGuard)
   async updateMyProfile(

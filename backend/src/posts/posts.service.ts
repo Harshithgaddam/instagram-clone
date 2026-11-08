@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 
 import { ConfigService } from '@nestjs/config';
+import type { Express } from 'express';
 
 import {
   POST_REPOSITORY,
@@ -126,6 +127,7 @@ export class PostsService {
   async  createPost(
     body: unknown,
     userId: string,
+    file?: Express.Multer.File,
   ): Promise<PostDetailResponseDto> {
     const dto =
       this.validateCreatePostBody(body);
@@ -188,6 +190,22 @@ export class PostsService {
         dto.kind === 'repost'
           ? dto.repostOfId!
           : null,
+      media:
+        file && dto.kind === 'original'
+          ? [
+              {
+                small_url: `/uploads/posts/${file.filename}`,
+                large_url: `/uploads/posts/${file.filename}`,
+                alt_text:
+                  typeof (body as Record<string, unknown>).altText ===
+                  'string'
+                    ? String(
+                        (body as Record<string, unknown>).altText,
+                      )
+                    : '',
+              },
+            ]
+          : undefined,
     };
 
     let created;
@@ -348,6 +366,7 @@ export class PostsService {
         'text',
         'replyToId',
         'repostOfId',
+        'altText',
       ]);
 
     for (const key of Object.keys(value)) {

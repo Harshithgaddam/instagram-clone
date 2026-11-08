@@ -331,6 +331,21 @@
     margin-bottom: 5px;
 }
 
+.post-author-link {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+}
+
+.post-author-link:hover {
+  text-decoration: underline;
+}
+
 
 .post-header p {
     font-size: 14px;

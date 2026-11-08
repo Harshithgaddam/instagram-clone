@@ -209,6 +209,14 @@ export interface PostRepository {
     limit: number,
   ): Promise<ProfileMediaPageResult>;
 
+  listProfilePosts(
+    userId: string,
+    kind: 'original' | 'repost',
+    cursor: FeedCursor | null,
+    limit: number,
+    viewerId: string,
+  ): Promise<FeedPageResult>;
+
   searchOriginals(
     query: string,
     cursor: FeedCursor | null,

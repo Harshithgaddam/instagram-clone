@@ -25,6 +25,7 @@ function PostModal({
   onRepost,
   onDelete,
   onDeleteComment,
+  onOpenUserProfile,
 }) {
   const postImagesRef = useRef(null);
 
@@ -233,11 +234,13 @@ const replyCount =
             />
 
             <div>
-              <h2>
-  {post.authorDisplayName ||
-    post.author ||
-    ""}
-</h2>
+              <button
+                type="button"
+                className="post-author-link"
+                onClick={() => onOpenUserProfile(post.authorId)}
+              >
+                {post.authorDisplayName || post.author || ""}
+              </button>
 
               <p>
                 {post.title}
@@ -252,7 +255,7 @@ const replyCount =
                 type="button"
                 className="follow-button"
                 onClick={() => {
-                  onToggleFollow(post.author);
+                  onToggleFollow(post);
                 }}
               >
                 {followingUsers.has(post.author)

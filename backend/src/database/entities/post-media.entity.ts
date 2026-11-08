@@ -8,8 +8,13 @@ import {
   Unique,
 } from 'typeorm';
 
-import { MediaImage } from '../../data/repository.types';
 import type { Post } from './post.entity';
+
+export interface DatabaseMediaImage {
+  alt_text: string;
+  small_url: string;
+  large_url: string;
+}
 
 @Entity({ name: 'post_media' })
 @Unique('post_media_post_id_key', ['postId'])
@@ -44,5 +49,5 @@ id: string;
   @Column({
     type: 'jsonb',
   })
-  images: MediaImage[];
+  images: DatabaseMediaImage[];
 }

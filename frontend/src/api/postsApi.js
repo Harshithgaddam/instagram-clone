@@ -3,6 +3,11 @@ const API_PAGE_LIMIT = 10;
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL;
 
+const resolveMediaUrl = (url) =>
+  url?.startsWith("/")
+    ? `${API_BASE_URL}${url}`
+    : url;
+
 const request = async (
   path,
   options = {},
@@ -11,10 +16,14 @@ const request = async (
     `${API_BASE_URL}${path}`,
     {
       ...options,
-      headers: {
-        "Content-Type": "application/json",
-        ...(options.headers ?? {}),
-      },
+      credentials: "include",
+      headers:
+        options.body instanceof FormData
+          ? { ...(options.headers ?? {}) }
+          : {
+              "Content-Type": "application/json",
+              ...(options.headers ?? {}),
+            },
     },
   );
 
@@ -44,7 +53,25 @@ export const createPost = async ({
   text,
   replyToId,
   repostOfId,
+  image,
+  altText,
 }) => {
+  if (image) {
+    const formData = new FormData();
+    formData.append("authorId", authorId);
+    formData.append("kind", kind);
+    if (text !== undefined) formData.append("text", text);
+    if (replyToId !== undefined) formData.append("replyToId", replyToId);
+    if (repostOfId !== undefined) formData.append("repostOfId", repostOfId);
+    formData.append("altText", altText ?? "");
+    formData.append("image", image);
+
+    return request("/posts", {
+      method: "POST",
+      body: formData,
+    });
+  }
+
   return request("/posts", {
     method: "POST",
     body: JSON.stringify({
@@ -103,6 +130,58 @@ export const fetchUserProfile = async (
 ) => {
   return request(`/users/${userId}`);
 };
+
+export const fetchUserPosts = async (
+  userId,
+  kind,
+  { cursor = null, limit = API_PAGE_LIMIT } = {},
+) => {
+  const params = new URLSearchParams();
+  params.set("kind", kind);
+  params.set("limit", String(limit));
+  if (cursor) params.set("cursor", cursor);
+  return request(`/users/${userId}/posts?${params.toString()}`);
+};
+
+export const updateUserProfile = async ({
+  displayName,
+  bio,
+  version,
+}) =>
+  request("/users/me", {
+    method: "PATCH",
+    body: JSON.stringify({ displayName, bio, version }),
+  });
+
+export const fetchUserFollowers = async (
+  userId,
+  { cursor = null, limit = API_PAGE_LIMIT } = {},
+) => {
+  const params = new URLSearchParams();
+  params.set("limit", String(limit));
+  if (cursor) params.set("cursor", cursor);
+  return request(`/users/${userId}/followers?${params.toString()}`);
+};
+
+export const fetchUserFollowing = async (
+  userId,
+  { cursor = null, limit = API_PAGE_LIMIT } = {},
+) => {
+  const params = new URLSearchParams();
+  params.set("limit", String(limit));
+  if (cursor) params.set("cursor", cursor);
+  return request(`/users/${userId}/following?${params.toString()}`);
+};
+
+export const followUser = async (userId) =>
+  request(`/users/${userId}/follow`, {
+    method: "POST",
+  });
+
+export const unfollowUser = async (userId) =>
+  request(`/users/${userId}/follow`, {
+    method: "DELETE",
+  });
 
 /* =====================================
    Profile media
@@ -212,15 +291,13 @@ export const convertApiPostToFeedPost = (
             image.alt_text ??
             "",
 
-          smallUrl:
-            image.smallUrl ??
-            image.small_url ??
-            "",
+          smallUrl: resolveMediaUrl(
+            image.smallUrl ?? image.small_url ?? "",
+          ),
 
-          largeUrl:
-            image.largeUrl ??
-            image.large_url ??
-            "",
+          largeUrl: resolveMediaUrl(
+            image.largeUrl ?? image.large_url ?? "",
+          ),
         }),
       );
   }

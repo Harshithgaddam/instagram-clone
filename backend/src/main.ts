@@ -3,9 +3,15 @@ import { ConfigService } from '@nestjs/config';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/http-exception.filter';
+import { join } from 'node:path';
+import express from 'express';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app
+    .getHttpAdapter()
+    .getInstance()
+    .use('/uploads', express.static(join(process.cwd(), 'uploads')));
 
   const configService = app.get(ConfigService);
 
