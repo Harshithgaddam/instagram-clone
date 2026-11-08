@@ -44,6 +44,7 @@ private readonly followRepository: FollowRepository,
 
   async getUser(
     id: string,
+    viewerId?: string,
   ): Promise<UserDetailResponseDto> {
     const user =
       await this.userRepository.findById(id);
@@ -75,6 +76,17 @@ private readonly followRepository: FollowRepository,
         postCount,
         followerCount,
         followingCount,
+        version: user.version,
+        isPrivate: user.isPrivate,
+        relationshipStatus:
+          viewerId === id
+            ? 'accepted'
+            : viewerId
+              ? await this.followRepository.getRelationship(
+                viewerId,
+                id,
+              )
+              : null,
       },
     };
   }
@@ -88,6 +100,27 @@ private readonly followRepository: FollowRepository,
     userId,
     cursor,
     limit,
+  );
+}
+
+async getUserPosts(
+  userId: string,
+  kind: 'original' | 'repost',
+  cursor: FeedCursor | null,
+  limit: number,
+  viewerId: string,
+) {
+  await this.checkRelationshipListAccess(
+    userId,
+    viewerId,
+  );
+
+  return this.postRepository.listProfilePosts(
+    userId,
+    kind,
+    cursor,
+    limit,
+    viewerId,
   );
 }
 async updateProfile(

@@ -8,6 +8,7 @@ export interface User {
   bio: string | null;
   avatarSmallUrl: string | null;
   avatarLargeUrl: string | null;
+  version: number;
   isPrivate: boolean;
 }
 

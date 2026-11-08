@@ -91,6 +91,11 @@ export interface CreatePostCommand {
   text?: string | null;
   replyToId?: string | null;
   repostOfId?: string | null;
+  media?: Array<{
+    alt_text: string;
+    small_url: string;
+    large_url: string;
+  }>;
 }
 
 export interface CreatedPostResult {

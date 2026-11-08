@@ -10,7 +10,13 @@ import {
   Put,
   HttpCode,
   HttpStatus,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { mkdirSync } from 'node:fs';
+import { join } from 'node:path';
 
 import { PostsService } from './posts.service';
 
@@ -62,13 +68,40 @@ export class PostsController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
+  @UseInterceptors(
+    FileInterceptor('image', {
+      storage: diskStorage({
+        destination: (_request, _file, callback) => {
+          const directory = join(process.cwd(), 'uploads', 'posts');
+          mkdirSync(directory, { recursive: true });
+          callback(null, directory);
+        },
+        filename: (_request, file, callback) => {
+          const extension = file.originalname
+            .split('.')
+            .pop()
+            ?.toLowerCase() || 'jpg';
+          callback(
+            null,
+            `${Date.now()}-${Math.random().toString(36).slice(2)}.${extension}`,
+          );
+        },
+      }),
+      limits: { fileSize: 10 * 1024 * 1024 },
+      fileFilter: (_request, file, callback) => {
+        callback(null, file.mimetype.startsWith('image/'));
+      },
+    }),
+  )
   async createPost(
     @Body() body: unknown,
     @CurrentUser() user: AuthenticatedUser,
+    @UploadedFile() file?: Express.Multer.File,
   ) {
     return this.postsService.createPost(
       body,
       user.userId,
+      file,
     );
   }
 

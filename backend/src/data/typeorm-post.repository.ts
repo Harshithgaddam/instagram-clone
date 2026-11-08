@@ -185,7 +185,7 @@ export class TypeOrmPostRepository
       return rows.map((row) => ({
         id: row.id,
         postId: row.postId,
-        images: row.images as MediaImage[],
+        images: row.images as unknown as MediaImage[],
       }));
     } catch (error) {
       this.handleDatabaseError(error);
@@ -549,6 +549,35 @@ export class TypeOrmPostRepository
     }
   }
 
+  async listProfilePosts(
+    userId: string,
+    kind: 'original' | 'repost',
+    cursor: FeedCursor | null,
+    limit: number,
+    viewerId: string,
+  ): Promise<FeedPageResult> {
+    try {
+      const qb = this.posts
+        .createQueryBuilder('post')
+        .innerJoin(
+          'post.author',
+          'author',
+          'author.disabledAt IS NULL',
+        )
+        .where('post.author_id = :userId', { userId })
+        .andWhere('post.kind = :kind', { kind })
+        .orderBy('post.created_at', 'DESC')
+        .addOrderBy('post.id', 'DESC')
+        .take(limit + 1);
+
+      this.applyCursor(qb, cursor);
+      const posts = await qb.getMany();
+      return this.buildFeedPage(posts, limit, viewerId);
+    } catch (error) {
+      this.handleDatabaseError(error);
+    }
+  }
+
   // =========================================================
   // C2.5 SEARCH
   // =========================================================
@@ -680,9 +709,19 @@ async createPost(
                */
             });
 
-          return postRepository.save(
-            post,
-          );
+          const savedPost = await postRepository.save(post);
+
+          if (command.media?.length) {
+            const mediaRepository = manager.getRepository(PostMedia);
+            await mediaRepository.save(
+              mediaRepository.create({
+                postId: savedPost.id,
+                images: command.media,
+              }),
+            );
+          }
+
+          return savedPost;
         },
       );
 
@@ -1132,7 +1171,7 @@ async setLike(
         postId:
           row.postId,
         images:
-          row.images as MediaImage[],
+          row.images as unknown as MediaImage[],
       }),
     );
   }

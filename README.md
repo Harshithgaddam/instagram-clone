@@ -38,7 +38,7 @@ The repository is intentionally split into two independently runnable applicatio
 - `frontend/`: browser UI, local UI state, API client, and presentation components.
 - `backend/`: HTTP API, validation, business rules, repositories, database entities, migrations, fixtures, and tests.
 
-There is no authentication system yet. During development, the frontend uses a configured demo user ID as the author for new posts, replies, and reposts.
+Authentication uses an HTTP-only `session` cookie issued by the backend. The frontend shows login and registration before loading the feed, and all API requests include browser credentials so the authenticated session is sent to guarded endpoints.
 
 ## Requirements
 
@@ -115,10 +115,9 @@ Create `frontend/.env`:
 
 ```env
 VITE_API_BASE_URL=http://localhost:3000
-VITE_DEMO_USER_ID=bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb
 ```
 
-The demo user ID must be a user that exists in the seeded database. Start the frontend:
+Start the frontend and create an account from the registration screen, or log in with an existing account:
 
 ```bash
 npm run dev
@@ -137,7 +136,7 @@ Open the URL printed by Vite, normally `http://localhost:5173`.
 | `FRONTEND_ORIGIN` | No | CORS origin. Defaults to `http://localhost:5173`. |
 | `DATABASE_CONNECT_TIMEOUT_MS` | No | PostgreSQL connection timeout. Defaults to `5000`. |
 | `SIMULATED_IO_MS` | No | Optional artificial repository delay from `0` to `1000` ms. |
-| `DEMO_USER_ID` | Currently required by backend config | Temporary viewer identity used by existing feed, search, detail, and like behavior. It must match a seeded user. It is not used as the author in `POST /posts`; the frontend sends `authorId`. |
+| `DEMO_USER_ID` | No | Legacy backend configuration retained for existing deployments; authenticated requests use the session user. |
 
 Never commit real credentials. Use `.env.example` as the shareable template.
 
@@ -146,7 +145,7 @@ Never commit real credentials. Use `.env.example` as the shareable template.
 | Variable | Required | Description |
 | --- | --- | --- |
 | `VITE_API_BASE_URL` | Yes | Base URL of the backend API. |
-| `VITE_DEMO_USER_ID` | Yes for creating posts | Temporary current-user ID sent as `authorId` when creating originals, replies, and reposts. |
+| `VITE_DEMO_USER_ID` | No | Legacy frontend configuration; the authenticated account ID is used for post actions. |
 
 Vite exposes variables prefixed with `VITE_` to browser code. Do not put secrets in frontend environment variables.
 
