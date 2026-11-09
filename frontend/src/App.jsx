@@ -40,7 +40,6 @@ import {
   updateUserProfile,
   followUser,
   unfollowUser,
-  fetchProfileMediaPage,
   searchPosts,
   likePost,
   unlikePost,
@@ -48,7 +47,6 @@ import {
   undoRepost,
   createPost,
   convertApiPostToFeedPost,
-  convertProfileMediaToFeedPost,
 } from "./api/postsApi";
 /* =====================================
    Utilities
@@ -76,7 +74,6 @@ import { notificationEmitter } from "./utils/EventEmitter";
    ===================================== */
 
 import SearchSection from "./components/SearchSection";
-import ProfileGrid from "./components/ProfileGrid";
 import InfiniteFeed from "./components/InfiniteFeed";
 import CreatePostModal from "./components/CreatePostModal";
 import PostModal from "./components/PostModal";
@@ -338,30 +335,6 @@ const searchLoadedIdsRef =
   /* =====================================
       Profile  State
       ===================================== */
-      const [
-  profilePosts,
-  setProfilePosts,
-] = useState([]);
-
-const [
-  profileNextCursor,
-  setProfileNextCursor,
-] = useState(null);
-
-const [
-  profileHasMore,
-  setProfileHasMore,
-] = useState(true);
-
-const [
-  profileLoading,
-  setProfileLoading,
-] = useState(false);
-
-const profileLoadedIdsRef =
-  useRef(new Set());
-  
-
   /* =====================================
      Main Post State
      ===================================== */
@@ -540,6 +513,9 @@ const [
 
   const [apiHasMore, setApiHasMore] =
     useState(true);
+
+  const [apiFeedMode, setApiFeedMode] =
+    useState('personalized');
 
   const [apiNextCursor, setApiNextCursor] =
   useState(null);
@@ -818,93 +794,6 @@ const [
       searchQuery,
       searchLoading,
       searchNextCursor,
-    ],
-  );
-
-  /* =====================================
-  fetch profileposts
-  ===================================== */
-  const fetchProfilePosts =
-  useCallback(
-    async ({
-      reset = false,
-    } = {}) => {
-      if (
-        profileLoading ||
-        (!reset && !profileHasMore)
-      ) {
-        return;
-      }
-
-      setProfileLoading(true);
-
-      try {
-        const data =
-          await fetchProfileMediaPage({
-            userId: currentUserId,
-            cursor:
-              reset
-                ? null
-                : profileNextCursor,
-            limit:
-              API_PAGE_LIMIT,
-          });
-
-        if (reset) {
-          profileLoadedIdsRef.current.clear();
-        }
-
-        const incoming =
-          Array.isArray(data.items)
-            ? data.items.map(
-                convertProfileMediaToFeedPost,
-              )
-            : [];
-
-        const unique = incoming.filter(
-          (post) => {
-            if (
-              profileLoadedIdsRef.current.has(
-                post.id,
-              )
-            ) {
-              return false;
-            }
-
-            profileLoadedIdsRef.current.add(
-              post.id,
-            );
-
-            return true;
-          },
-        );
-
-        setProfilePosts(
-          (previous) =>
-            reset
-              ? unique
-              : [
-                  ...previous,
-                  ...unique,
-                ],
-        );
-
-        setProfileNextCursor(
-          data.nextCursor ?? null,
-        );
-
-        setProfileHasMore(
-          Boolean(data.hasMore),
-        );
-      } finally {
-        setProfileLoading(false);
-      }
-    },
-    [
-      currentUserId,
-      profileLoading,
-      profileHasMore,
-      profileNextCursor,
     ],
   );
 
@@ -1661,6 +1550,10 @@ const fetchNextApiPage =
           limit: API_PAGE_LIMIT,
         });
 
+      setApiFeedMode(
+        data.feedMode ?? 'personalized',
+      );
+
       const incomingPosts =
         Array.isArray(data.items)
           ? data.items.map(
@@ -1949,13 +1842,6 @@ const fetchNextApiPage =
         ),
       );
 
-      // Remove it from profile posts if present.
-      setProfilePosts((previousPosts) =>
-        previousPosts.filter(
-          (post) => post.id !== postId,
-        ),
-      );
-
       // Close the modal.
       setSelectedPost(null);
 
@@ -1980,7 +1866,6 @@ const fetchNextApiPage =
   }, [
     selectedPost,
     setApiPosts,
-    setProfilePosts,
   ]);
 
   /* =====================================
@@ -2044,14 +1929,9 @@ const fetchNextApiPage =
         {!searchQuery.trim() && (
   <div className="combined-feed-grid">
 
-    <ProfileGrid
-      posts={profilePosts}
-      loading={profileLoading}
-      onPostClick={openPost}
-    />
-
     <InfiniteFeed
       apiPosts={apiPosts}
+      apiFeedMode={apiFeedMode}
       apiImageStatus={
         apiImageStatus
       }
@@ -2177,6 +2057,7 @@ const fetchNextApiPage =
           post={selectedPost}
 
           currentUser={currentUser}
+          currentUserId={currentUserId}
 
           currentImageIndex={
             currentImageIndex

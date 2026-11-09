@@ -36,4 +36,5 @@ export class FeedResponseDto {
   items: FeedPostResponseDto[];
   nextCursor: string | null;
   hasMore: boolean;
+  feedMode?: 'personalized' | 'public_fallback' | 'public';
 }

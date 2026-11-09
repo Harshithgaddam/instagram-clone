@@ -2,6 +2,7 @@ export interface CursorPayload {
   v: 1;
   createdAt: string;
   id: string;
+  feedGroup?: 0 | 1;
 }
 
 const MAX_CURSOR_LENGTH = 1024;
@@ -18,11 +19,15 @@ const BASE64URL_REGEX =
 export function encodeCursor(
   createdAt: string,
   id: string,
+  feedGroup?: 0 | 1,
 ): string {
   const payload: CursorPayload = {
     v: 1,
     createdAt,
     id,
+    ...(feedGroup !== undefined
+      ? { feedGroup }
+      : {}),
   };
 
   return Buffer
@@ -134,10 +139,23 @@ export function decodeCursor(
     );
   }
 
+
+  if (
+    value.feedGroup !== undefined &&
+    value.feedGroup !== 0 &&
+    value.feedGroup !== 1
+  ) {
+    throw new Error(
+      'Invalid cursor feed group',
+    );
+  }
   return {
     v: 1,
     createdAt:
       value.createdAt,
     id: value.id,
+    ...(value.feedGroup !== undefined
+      ? { feedGroup: value.feedGroup as 0 | 1 }
+      : {}),
   };
 }

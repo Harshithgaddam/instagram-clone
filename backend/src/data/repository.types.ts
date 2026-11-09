@@ -6,6 +6,7 @@ export type PostKind =
 export interface FeedCursor {
   createdAt: Date;
   id: string;
+  feedGroup?: 0 | 1;
 }
 
 export interface AuthorResult {
@@ -48,6 +49,7 @@ export interface FeedPageResult {
   items: FeedPostResult[];
   nextCursor: FeedCursor | null;
   hasMore: boolean;
+  feedMode?: 'personalized' | 'public_fallback' | 'public';
 }
 
 export interface PostDetailResult

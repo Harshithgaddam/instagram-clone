@@ -7,6 +7,12 @@
     margin-top: 0;
 }
 
+.feed-mode-label {
+    margin: 0 0 12px;
+    color: #555;
+    font-size: 13px;
+}
+
 
 /* =========================================================
    API IMAGE GRID

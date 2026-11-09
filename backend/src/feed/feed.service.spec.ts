@@ -32,6 +32,19 @@ describe('FeedService', () => {
       }>
     >(),
 
+    listPublicFeed: jest.fn<
+      (
+        cursor: { createdAt: Date; id: string } | null,
+        limit: number,
+        viewerId: string,
+      ) => Promise<{
+        items: any[];
+        nextCursor: null;
+        hasMore: boolean;
+        feedMode: 'public';
+      }>
+    >(),
+
     findById: jest.fn<
       (
         id: string,
@@ -156,6 +169,8 @@ describe('FeedService', () => {
         bio: 'Test bio',
           avatarSmallUrl: '/small.jpg',
           avatarLargeUrl: '/large.jpg',
+          version: 1,
+          isPrivate: false,
         
       });
 
@@ -208,4 +223,24 @@ describe('FeedService', () => {
       );
     },
   );
+
+  it('returns the public mode for the compatibility feed', async () => {
+    fakePostRepository.listPublicFeed.mockResolvedValue({
+      items: [],
+      nextCursor: null,
+      hasMore: false,
+      feedMode: 'public',
+    });
+
+    const result = await service.getPublicPosts(
+      'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+      { kind: 'original', limit: 10 },
+    );
+
+    expect(result).toMatchObject({
+      items: [],
+      feedMode: 'public',
+    });
+  });
+
 });

@@ -381,6 +381,21 @@
     color: white;
 }
 
+.delete-post-button {
+    margin-left: auto;
+    padding: 6px 10px;
+    border: 1px solid #c33;
+    border-radius: 6px;
+    background: #fff;
+    color: #b22;
+    cursor: pointer;
+}
+
+.delete-post-button:hover {
+    background: #b22;
+    color: #fff;
+}
+
 
 /* =========================
    Description
