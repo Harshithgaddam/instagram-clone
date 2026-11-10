@@ -7,6 +7,7 @@ import {
   Post,
   PostKind,
 } from '../database/entities/post.entity';
+import { FollowStatus } from '../database/entities/follow.entity';
 
 import { User } from '../database/entities/user.entity';
 
@@ -265,43 +266,181 @@ export class TypeOrmPostRepository
     viewerId: string,
   ): Promise<FeedPageResult> {
     try {
-      const qb =
-        this.posts
-          .createQueryBuilder('post')
-          .innerJoin(
-        'post.author',
-        'author',
-        'author.disabledAt IS NULL',
-      )
-          .where(
-            'post.kind = :kind',
-            {
-              kind: PostKind.ORIGINAL,
-            },
+      const activeFollowRows: { hasFollowing: boolean }[] =
+        await this.database.query(
+          `
+          SELECT EXISTS (
+            SELECT 1
+            FROM follows feed_follow
+            INNER JOIN users followed_author
+              ON followed_author.id = feed_follow.following_id
+            WHERE feed_follow.follower_id = $1
+              AND feed_follow.status = $2
+              AND followed_author.disabled_at IS NULL
+          ) AS "hasFollowing"
+          `,
+          [viewerId, FollowStatus.ACCEPTED],
+        );
+      const hasFollowing =
+        activeFollowRows[0]?.hasFollowing === true;
+      const rows: Array<{
+        id: string;
+        author_id: string;
+        kind: PostKind;
+        reply_to_id: string | null;
+        repost_of_id: string | null;
+        text: string | null;
+        created_at: Date | string;
+        feed_group: number;
+      }> = await this.database.query(
+        `
+        WITH feed_candidates AS (
+          SELECT
+            post.id,
+            post.author_id,
+            post.kind,
+            post.reply_to_id,
+            post.repost_of_id,
+            post.text,
+            post.created_at,
+            CASE
+              WHEN EXISTS (
+                  SELECT 1
+                  FROM follows feed_follow
+                  INNER JOIN users followed_author
+                    ON followed_author.id = feed_follow.following_id
+                  WHERE feed_follow.follower_id = $2
+                    AND feed_follow.following_id = post.author_id
+                    AND feed_follow.status = $7
+                    AND followed_author.disabled_at IS NULL
+                )
+              THEN 0
+              ELSE 1
+            END AS feed_group
+          FROM posts post
+          INNER JOIN users author
+            ON author.id = post.author_id
+            AND author.disabled_at IS NULL
+          WHERE post.kind = $1
+            AND (
+              author.is_private = false
+              OR EXISTS (
+              SELECT 1
+                FROM follows feed_follow
+                INNER JOIN users followed_author
+                  ON followed_author.id = feed_follow.following_id
+                WHERE feed_follow.follower_id = $2
+                  AND feed_follow.following_id = post.author_id
+                  AND feed_follow.status = $7
+                  AND followed_author.disabled_at IS NULL
+              )
+            )
+        )
+        SELECT *
+        FROM feed_candidates
+        WHERE $4::timestamptz IS NULL
+          OR (
+            $3::integer IS NULL
+            AND (created_at, id) < ($4::timestamptz, $5::uuid)
           )
-          .orderBy(
-            'post.created_at',
-            'DESC',
+          OR (
+            $3::integer IS NOT NULL
+            AND (
+              feed_group > $3
+              OR (
+                feed_group = $3
+                AND (created_at, id) < ($4::timestamptz, $5::uuid)
+              )
+            )
           )
-          .addOrderBy(
-            'post.id',
-            'DESC',
-          )
-          .take(limit + 1);
-
-      this.applyCursor(
-        qb,
-        cursor,
+        ORDER BY feed_group ASC, created_at DESC, id DESC
+        LIMIT $6
+        `,
+        [
+          PostKind.ORIGINAL,
+          viewerId,
+          cursor?.feedGroup ?? null,
+          cursor?.createdAt ?? null,
+          cursor?.id ?? null,
+          limit + 1,
+          FollowStatus.ACCEPTED,
+        ],
+      );
+      const posts = rows.map((row) =>
+        this.posts.create({
+          id: row.id,
+          authorId: row.author_id,
+          kind: row.kind,
+          replyToId: row.reply_to_id,
+          repostOfId: row.repost_of_id,
+          text: row.text,
+          createdAt: new Date(row.created_at),
+        }),
+      );
+      const feedGroups = new Map(
+        rows.map((row) => [
+          row.id,
+          Number(row.feed_group) as 0 | 1,
+        ]),
       );
 
-      const posts =
-        await qb.getMany();
-
-      return this.buildFeedPage(
+      const page = await this.buildFeedPage(
         posts,
         limit,
         viewerId,
       );
+
+      return {
+        ...page,
+        nextCursor:
+          page.nextCursor && page.items.length > 0
+            ? {
+                ...page.nextCursor,
+                feedGroup:
+                  feedGroups.get(
+                    page.items[page.items.length - 1].id,
+                  ) ?? 1,
+              }
+            : null,
+        feedMode: hasFollowing
+          ? 'personalized'
+          : 'public_fallback',
+      };
+    } catch (error) {
+      this.handleDatabaseError(error);
+    }
+  }
+
+  async listPublicFeed(
+    cursor: FeedCursor | null,
+    limit: number,
+    viewerId: string,
+  ): Promise<FeedPageResult> {
+    try {
+      const qb = this.posts
+        .createQueryBuilder('post')
+        .innerJoin(
+          'post.author',
+          'author',
+          'author.disabledAt IS NULL',
+        )
+        .where('post.kind = :kind', {
+          kind: PostKind.ORIGINAL,
+        })
+        .andWhere('author.is_private = false')
+        .orderBy('post.created_at', 'DESC')
+        .addOrderBy('post.id', 'DESC')
+        .take(limit + 1);
+
+      this.applyCursor(qb, cursor);
+
+      const posts = await qb.getMany();
+      const page = await this.buildFeedPage(posts, limit, viewerId);
+
+      return {
+        ...page,
+        feedMode: 'public',
+      };
     } catch (error) {
       this.handleDatabaseError(error);
     }

@@ -6,6 +6,7 @@ import "./PostModal.css";
 function PostModal({
   post,
   currentUser,
+  currentUserId,
   currentImageIndex,
   setCurrentImageIndex,
   onClose,
@@ -263,9 +264,12 @@ const replyCount =
                   : "Follow"}
               </button>
             )}
-            {post.author === currentUser && (
+            {post.isApiPost &&
+              post.kind === "original" &&
+              post.authorId === currentUserId && (
   <button
     type="button"
+    className="delete-post-button"
     onClick={onDelete}
     aria-label="Delete post"
   >

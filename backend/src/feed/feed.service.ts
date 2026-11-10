@@ -9,19 +9,15 @@ import {
   POST_REPOSITORY,
   USER_REPOSITORY,
 } from '../data/data.tokens';
-
 import type {
   FindPostsOptions,
   PostRepository,
 } from '../data/post.repository';
-
 import type { UserRepository } from '../data/user.repository';
-
 import {
   FeedPostResponseDto,
   FeedResponseDto,
 } from './feed-response.dto';
-
 import { encodeCursor } from '../common/cursor';
 
 interface DatabaseMediaImage {
@@ -42,150 +38,136 @@ export class FeedService {
     private readonly configService: ConfigService,
   ) {}
 
- async getPosts(
-  viewerId: string,
-  options?: FindPostsOptions,
-  
-): Promise<FeedResponseDto> {
-  const limit = options?.limit ?? 10;
+  async getPosts(
+    viewerId: string,
+    options?: FindPostsOptions,
+  ): Promise<FeedResponseDto> {
+    const limit = options?.limit ?? 10;
+    const cursor =
+      options?.cursorCreatedAt && options?.cursorId
+        ? {
+            createdAt: options.cursorCreatedAt,
+            id: options.cursorId,
+            feedGroup: options.cursorFeedGroup,
+          }
+        : null;
 
-  const cursor =
-    options?.cursorCreatedAt &&
-    options?.cursorId
-      ? {
-          createdAt: options.cursorCreatedAt,
-          id: options.cursorId,
-        }
-      : null;
-
-  
-
-  const result =
-    await this.postRepository.listOriginalFeed(
+    const result = await this.postRepository.listOriginalFeed(
       cursor,
       limit,
       viewerId,
     );
 
-  const items = await Promise.all(
-    result.items.map((post) =>
-      this.mapPost(post.id,viewerId),
-    ),
-  );
+    return this.mapPage(result, viewerId);
+  }
 
-  const nextCursor = result.nextCursor
-    ? encodeCursor(
-        result.nextCursor.createdAt.toISOString(),
-        result.nextCursor.id,
-      )
-    : null;
+  async getPublicPosts(
+    viewerId: string,
+    options?: FindPostsOptions,
+  ): Promise<FeedResponseDto> {
+    const limit = options?.limit ?? 10;
+    const cursor =
+      options?.cursorCreatedAt && options?.cursorId
+        ? {
+            createdAt: options.cursorCreatedAt,
+            id: options.cursorId,
+          }
+        : null;
 
-  return {
-    items,
-    nextCursor,
-    hasMore: result.hasMore,
-  };
-}
+    const result = await this.postRepository.listPublicFeed(
+      cursor,
+      limit,
+      viewerId,
+    );
+
+    return this.mapPage(result, viewerId);
+  }
+
+  private async mapPage(
+    result: Awaited<ReturnType<PostRepository['listOriginalFeed']>>,
+    viewerId: string,
+  ): Promise<FeedResponseDto> {
+    const items = await Promise.all(
+      result.items.map((post) =>
+        this.mapPost(post.id, viewerId),
+      ),
+    );
+
+    const nextCursor = result.nextCursor
+      ? encodeCursor(
+          result.nextCursor.createdAt.toISOString(),
+          result.nextCursor.id,
+          result.nextCursor.feedGroup,
+        )
+      : null;
+
+    return {
+      items,
+      nextCursor,
+      hasMore: result.hasMore,
+      feedMode: result.feedMode ?? 'personalized',
+    };
+  }
 
   private async mapPost(
     postId: string,
-     viewerId: string
+    viewerId: string,
   ): Promise<FeedPostResponseDto> {
-    const post =
-      await this.postRepository.findById(
-        postId,
-      );
+    const feedEntry = await this.postRepository.findById(postId);
 
-    if (!post) {
-      throw new NotFoundException(
-        'Post not found',
-      );
+    if (!feedEntry) {
+      throw new NotFoundException('Post not found');
     }
 
-    const author =
-      await this.userRepository.findById(
-        post.authorId,
-      );
+    const author = await this.userRepository.findById(feedEntry.authorId);
 
     if (!author) {
-      throw new NotFoundException(
-        'Post author not found',
-      );
+      throw new NotFoundException('Post author not found');
     }
 
     const [
       media,
       likeCount,
       replyCount,
+      likedByViewer,
+      viewerRepostId,
     ] = await Promise.all([
-      this.postRepository.findMediaByPostId(
-        post.id,
-      ),
-      this.postRepository.countLikes(
-        post.id,
-      ),
-      this.postRepository.countReplies(
-        post.id,
-      ),
+      this.postRepository.findMediaByPostId(feedEntry.id),
+      this.postRepository.countLikes(feedEntry.id),
+      this.postRepository.countReplies(feedEntry.id),
+      this.postRepository.isLikedByUser(feedEntry.id, viewerId),
+      this.postRepository.findViewerRepostId(feedEntry.id, viewerId),
     ]);
 
-    
-      
-
-    const likedByViewer =
-      await this.postRepository.isLikedByUser(
-        post.id,
-        viewerId,
-      );
-
-    const viewerRepostId =
-      await this.postRepository.findViewerRepostId(
-        post.id,
-       viewerId,
-      );
-
     return {
-      id: post.id,
-      kind: post.kind,
-
-      text:
-        post.kind === 'repost'
-          ? null
-          : post.text,
-
-      createdAt: post.createdAt.toISOString(),
-
+      id: feedEntry.id,
+      kind: feedEntry.kind,
+      text: feedEntry.text,
+      createdAt: feedEntry.createdAt.toISOString(),
       author: {
-  id: author.id,
-  handle: author.handle,
-  displayName: author.displayName,
-  bio: author.bio,
-  avatarSmallUrl: author.avatarSmallUrl,
-  avatarLargeUrl: author.avatarLargeUrl,
-},
-
-  media: media.flatMap((item) =>
-  (item.images as unknown as DatabaseMediaImage[]).map(
-    (image) => ({
-      id: item.id,
-      altText: image.alt_text,
-      smallUrl: image.small_url,
-      largeUrl: image.large_url,
-    }),
-  ),
-),
-
+        id: author.id,
+        handle: author.handle,
+        displayName: author.displayName,
+        bio: author.bio,
+        avatarSmallUrl: author.avatarSmallUrl,
+        avatarLargeUrl: author.avatarLargeUrl,
+      },
+      media: media.flatMap((item) =>
+        (item.images as unknown as DatabaseMediaImage[]).map(
+          (image) => ({
+            id: item.id,
+            altText: image.alt_text,
+            smallUrl: image.small_url,
+            largeUrl: image.large_url,
+          }),
+        ),
+      ),
       likeCount,
       replyCount,
       likedByViewer,
-      repostedByViewer:
-        viewerRepostId !== null,
-
-      replyToId:
-        post.replyToId ?? null,
-
-      repostOfId:
-        post.repostOfId ?? null,
+      repostedByViewer: viewerRepostId !== null,
+      replyToId: null,
+      repostOfId: feedEntry.repostOfId,
     };
   }
 }

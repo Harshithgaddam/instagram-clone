@@ -6,6 +6,7 @@ import {
 
 function InfiniteFeed({
   apiPosts,
+  apiFeedMode,
   apiImageStatus,
   apiLoading,
   apiError,
@@ -57,6 +58,9 @@ function InfiniteFeed({
 
   return (
     <section className="infinite-feed-section">
+      {apiFeedMode === "public_fallback" && (
+        <p className="feed-mode-label">Public posts for your first feed</p>
+      )}
       <div className="infinite-feed-list">
         {apiPosts.map((post) => {
           const imageStatus =

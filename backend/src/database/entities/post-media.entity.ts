@@ -11,6 +11,7 @@ import {
 import type { Post } from './post.entity';
 
 export interface DatabaseMediaImage {
+  tags: string[];
   alt_text: string;
   small_url: string;
   large_url: string;

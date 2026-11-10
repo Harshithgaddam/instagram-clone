@@ -22,6 +22,7 @@ import { UseGuards } from '@nestjs/common';
 import { AuthGuard } from '../auth/auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 import type { AuthenticatedUser } from '../auth/current-user.decorator';
+import type { FindPostsOptions } from '../data/post.repository';
 
 @Controller('feed')
 @UseGuards(AuthGuard)
@@ -31,14 +32,30 @@ export class FeedController {
   ) {}
 
   @Get()
-async getFeed(
-  @Query()
-  query: Record<
-    string,
-    string | string[] | undefined
-  >,
-  @CurrentUser() user: AuthenticatedUser,
-) {
+  async getFeed(
+    @Query() query: Record<string, string | string[] | undefined>,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.feedService.getPosts(
+      user.userId,
+      this.parseFeedQuery(query),
+    );
+  }
+
+  @Get('public')
+  async getPublicFeed(
+    @Query() query: Record<string, string | string[] | undefined>,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.feedService.getPublicPosts(
+      user.userId,
+      this.parseFeedQuery(query),
+    );
+  }
+
+  private parseFeedQuery(
+    query: Record<string, string | string[] | undefined>,
+  ): FindPostsOptions {
   const safeQuery = query ?? {};
 
   rejectUnknownQueryParameters(
@@ -112,13 +129,14 @@ async getFeed(
       }
     }
 
-    return this.feedService.getPosts(user.userId,{
-  kind: 'original',
-  limit: parsedLimit,
-  cursorCreatedAt: decodedCursor?.createdAt
-    ? new Date(decodedCursor.createdAt)
-    : undefined,
-  cursorId: decodedCursor?.id,
-},);
+    return {
+      kind: 'original',
+      limit: parsedLimit,
+      cursorCreatedAt: decodedCursor?.createdAt
+        ? new Date(decodedCursor.createdAt)
+        : undefined,
+      cursorId: decodedCursor?.id,
+      cursorFeedGroup: decodedCursor?.feedGroup,
+    };
   }
 }
