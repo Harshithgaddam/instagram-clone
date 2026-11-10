@@ -33,7 +33,7 @@ function cookieOptions() {
   return [
     'Path=/',
     'HttpOnly',
-    'SameSite=Lax',
+    secure ? 'SameSite=None' : 'SameSite=Lax',
     `Max-Age=${COOKIE_MAX_AGE_SECONDS}`,
     ...(secure ? ['Secure'] : []),
   ].join('; ');
@@ -120,7 +120,7 @@ export class AuthController {
         `${COOKIE_NAME}=`,
         'Path=/',
         'HttpOnly',
-        'SameSite=Lax',
+        secure ? 'SameSite=None' : 'SameSite=Lax',
         'Max-Age=0',
         ...(secure ? ['Secure'] : []),
       ].join('; '),
