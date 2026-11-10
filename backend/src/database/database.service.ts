@@ -58,12 +58,19 @@ export class DatabaseService
         'PostgreSQL database connected successfully',
       );
     } catch (error) {
-      console.error(
-        'PostgreSQL database connection failed',
-      );
+  console.error('PostgreSQL database connection failed');
 
-      throw error;
-    }
+  if (error instanceof Error) {
+    console.error('Error name:', error.name);
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    console.error('Error cause:', error.cause);
+  } else {
+    console.error('Unknown error:', String(error));
+  }
+
+  throw error;
+}
   }
 
   async onModuleDestroy(): Promise<void> {
