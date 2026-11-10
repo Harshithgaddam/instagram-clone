@@ -14,6 +14,7 @@ import { PostMedia } from './entities/post-media.entity';
 import { Like } from './entities/like.entity';
 import { Follow } from './entities/follow.entity';
 import { Session } from './entities/session.entity';
+import 'pg';
 @Injectable()
 export class DatabaseService
   extends DataSource
